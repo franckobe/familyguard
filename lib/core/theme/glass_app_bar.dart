@@ -27,14 +27,12 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final primaryColor = theme.colorScheme.primary;
+    final statusBarHeight = MediaQuery.of(context).padding.top;
 
     Widget? effectiveLeading = leading;
     if (effectiveLeading == null && automaticallyImplyLeading) {
       if (Navigator.canPop(context)) {
-        effectiveLeading = IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, size: 20),
-          onPressed: () => Navigator.of(context).pop(),
-        );
+        effectiveLeading = CupertinoBackButton(color: primaryColor);
       }
     }
 
@@ -48,13 +46,15 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
               color: Colors.white.withValues(alpha: 0.78),
               border: Border(
                 bottom: BorderSide(
-                  color: Colors.black.withValues(alpha: 0.06),
+                  color: Colors.black.withValues(alpha: 0.08),
                   width: 0.5,
                 ),
               ),
             ),
-            child: SafeArea(
-              bottom: false,
+            // Padding pushes toolbar below status bar — no Column/SafeArea
+            // to avoid rounding overflow.
+            child: Padding(
+              padding: EdgeInsets.only(top: statusBarHeight),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -95,6 +95,39 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Bouton retour style iOS — chevron + "Retour"
+class CupertinoBackButton extends StatelessWidget {
+  const CupertinoBackButton({super.key, required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => Navigator.of(context).pop(),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.arrow_back_ios_new, size: 18, color: color),
+            const SizedBox(width: 2),
+            Text(
+              'Retour',
+              style: TextStyle(
+                color: color,
+                fontSize: 17,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ],
         ),
       ),
     );

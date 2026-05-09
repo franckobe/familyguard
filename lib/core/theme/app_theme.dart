@@ -12,6 +12,10 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       colorScheme: cs,
+      // Supprime les ripples Material → look iOS
+      splashFactory: NoSplash.splashFactory,
+      highlightColor: Colors.transparent,
+      splashColor: Colors.transparent,
       appBarTheme: AppBarTheme(
         centerTitle: true,
         backgroundColor: Colors.white.withValues(alpha: 0.85),
