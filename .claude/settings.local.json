@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C /Users/franckgarros/Documents/Dev/familyguard status)",
+      "Bash(git -C /Users/franckgarros/Documents/Dev/familyguard add README.md)",
+      "Bash(git -C /Users/franckgarros/Documents/Dev/familyguard commit -m ' *)",
+      "Bash(git *)",
+      "Bash(flutter --version)",
+      "Bash(firebase --version)",
+      "Bash(flutterfire --version)",
+      "Bash(firebase projects:list)",
+      "Bash(firebase login:list *)",
+      "Bash(flutter create *)"
+    ]
+  }
+}
