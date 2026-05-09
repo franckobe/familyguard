@@ -16,14 +16,14 @@ final routerProvider = Provider<GoRouter>((ref) {
     refreshListenable: notifier,
     redirect: (context, state) {
       final authAsync = ref.read(authStateProvider);
-      if (authAsync.isLoading) return '/splash';
+      if (authAsync.isLoading) return null;
 
       final isAuthenticated = authAsync.valueOrNull != null;
-      const authRoutes = ['/login', '/register', '/forgot-password', '/splash'];
-      final isAuthRoute = authRoutes.contains(state.matchedLocation);
+      final loc = state.matchedLocation;
+      const authOnlyRoutes = ['/login', '/register', '/forgot-password', '/splash'];
 
-      if (!isAuthenticated && !isAuthRoute) return '/login';
-      if (isAuthenticated && isAuthRoute) return '/home';
+      if (!isAuthenticated && !authOnlyRoutes.contains(loc)) return '/login';
+      if (isAuthenticated && authOnlyRoutes.contains(loc)) return '/home';
       return null;
     },
     routes: [
