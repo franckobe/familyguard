@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/glass_app_bar.dart';
 import '../models/child.dart';
 import '../providers/children_providers.dart';
@@ -125,7 +126,7 @@ class _EditChildScreenState extends ConsumerState<EditChildScreen> {
       body: Form(
         key: _formKey,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppTheme.pagePadding),
           child: Column(
             children: [
               Center(

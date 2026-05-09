@@ -148,7 +148,9 @@ class _AddChildBottomSheetState extends ConsumerState<AddChildBottomSheet> {
                       ? 'Date de naissance *'
                       : DateFormat('d MMMM yyyy', 'fr').format(_birthDate!),
                   style: _birthDate == null
-                      ? TextStyle(color: Colors.grey[600])
+                      ? TextStyle(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        )
                       : null,
                 ),
                 trailing: const Icon(Icons.calendar_today),

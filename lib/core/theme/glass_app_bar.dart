@@ -2,6 +2,10 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+/// AppBar avec effet frosted glass iOS.
+///
+/// Utilise [AppBar] + [flexibleSpace] — Flutter gère lui-même le status bar,
+/// aucun risque d'overflow.
 class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
   const GlassAppBar({
     super.key,
@@ -25,73 +29,38 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final primaryColor = theme.colorScheme.primary;
-    final statusBarHeight = MediaQuery.of(context).padding.top;
+    final cs = Theme.of(context).colorScheme;
 
     Widget? effectiveLeading = leading;
     if (effectiveLeading == null && automaticallyImplyLeading) {
       if (Navigator.canPop(context)) {
-        effectiveLeading = CupertinoBackButton(color: primaryColor);
+        effectiveLeading = _CupertinoBackButton(color: cs.primary);
       }
     }
 
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.dark,
-      child: ClipRect(
+    return AppBar(
+      leading: effectiveLeading,
+      automaticallyImplyLeading: false,
+      centerTitle: true,
+      title: title,
+      actions: actions,
+      bottom: bottom,
+      backgroundColor: Colors.transparent,
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      systemOverlayStyle: SystemUiOverlayStyle.dark,
+      flexibleSpace: ClipRect(
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-          child: Container(
+          child: DecoratedBox(
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.78),
+              color: Colors.white.withValues(alpha: 0.80),
               border: Border(
                 bottom: BorderSide(
                   color: Colors.black.withValues(alpha: 0.08),
                   width: 0.5,
                 ),
-              ),
-            ),
-            // Padding pushes toolbar below status bar — no Column/SafeArea
-            // to avoid rounding overflow.
-            child: Padding(
-              padding: EdgeInsets.only(top: statusBarHeight),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SizedBox(
-                    height: kToolbarHeight,
-                    child: NavigationToolbar(
-                      leading: effectiveLeading != null
-                          ? IconTheme(
-                              data: IconThemeData(color: primaryColor),
-                              child: effectiveLeading,
-                            )
-                          : null,
-                      middle: title != null
-                          ? DefaultTextStyle(
-                              style: TextStyle(
-                                color: theme.colorScheme.onSurface,
-                                fontSize: 17,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: -0.4,
-                              ),
-                              child: title!,
-                            )
-                          : null,
-                      trailing: actions != null
-                          ? IconTheme(
-                              data: IconThemeData(color: primaryColor),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: actions!,
-                              ),
-                            )
-                          : null,
-                      centerMiddle: true,
-                    ),
-                  ),
-                  if (bottom != null) bottom!,
-                ],
               ),
             ),
           ),
@@ -101,9 +70,9 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 }
 
-/// Bouton retour style iOS — chevron + "Retour"
-class CupertinoBackButton extends StatelessWidget {
-  const CupertinoBackButton({super.key, required this.color});
+/// Bouton retour style iOS — « < Retour »
+class _CupertinoBackButton extends StatelessWidget {
+  const _CupertinoBackButton({required this.color});
 
   final Color color;
 
@@ -118,7 +87,7 @@ class CupertinoBackButton extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.arrow_back_ios_new, size: 18, color: color),
-            const SizedBox(width: 2),
+            const SizedBox(width: 3),
             Text(
               'Retour',
               style: TextStyle(

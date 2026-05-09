@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/glass_app_bar.dart';
 import '../models/child.dart';
 import '../providers/children_providers.dart';
@@ -28,7 +29,9 @@ class ChildDetailScreen extends ConsumerWidget {
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(ctx).colorScheme.error,
+            ),
             child: const Text('Supprimer'),
           ),
         ],
@@ -50,6 +53,7 @@ class ChildDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final childAsync = ref.watch(childDetailProvider(childId));
+    final cs = Theme.of(context).colorScheme;
     final topPadding = MediaQuery.of(context).padding.top + kToolbarHeight;
 
     return childAsync.when(
@@ -76,25 +80,27 @@ class ChildDetailScreen extends ConsumerWidget {
           ),
           body: SingleChildScrollView(
             padding: EdgeInsets.only(
-              top: topPadding + 16,
-              left: 24,
-              right: 24,
-              bottom: 40,
+              top: topPadding + AppTheme.pagePadding,
+              left: AppTheme.pagePadding,
+              right: AppTheme.pagePadding,
+              bottom: AppTheme.pagePadding * 2,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 CircleAvatar(
                   radius: 60,
+                  backgroundColor: cs.primaryContainer,
                   backgroundImage: child.avatarUrl != null
                       ? CachedNetworkImageProvider(child.avatarUrl!)
                       : null,
                   child: child.avatarUrl == null
                       ? Text(
                           '${child.firstName[0]}${child.lastName[0]}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 36,
-                            fontWeight: FontWeight.bold,
+                            fontWeight: FontWeight.w600,
+                            color: cs.onPrimaryContainer,
                           ),
                         )
                       : null,
@@ -109,7 +115,7 @@ class ChildDetailScreen extends ConsumerWidget {
                   style: Theme.of(context)
                       .textTheme
                       .bodyLarge
-                      ?.copyWith(color: Colors.grey),
+                      ?.copyWith(color: cs.onSurfaceVariant),
                 ),
                 const SizedBox(height: 24),
                 if (child.allergies != null) ...[
@@ -130,13 +136,13 @@ class ChildDetailScreen extends ConsumerWidget {
                 const SizedBox(height: 32),
                 OutlinedButton.icon(
                   onPressed: () => _confirmDelete(context, ref, child),
-                  icon: const Icon(Icons.delete_outline, color: Colors.red),
-                  label: const Text(
+                  icon: Icon(Icons.delete_outline, color: cs.error),
+                  label: Text(
                     'Supprimer',
-                    style: TextStyle(color: Colors.red),
+                    style: TextStyle(color: cs.error),
                   ),
                   style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Colors.red),
+                    side: BorderSide(color: cs.error),
                   ),
                 ),
               ],
@@ -162,7 +168,7 @@ class _InfoTile extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: cs.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppTheme.rM),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -172,7 +178,7 @@ class _InfoTile extends StatelessWidget {
             style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
           ),
           const SizedBox(height: 4),
-          Text(value),
+          Text(value, style: TextStyle(color: cs.onSurface)),
         ],
       ),
     );

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/glass_app_bar.dart';
 import '../providers/children_providers.dart';
 import '../widgets/add_child_bottom_sheet.dart';
@@ -11,6 +12,7 @@ class ChildrenListScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final childrenAsync = ref.watch(childrenProvider);
+    final cs = Theme.of(context).colorScheme;
     final topPadding = MediaQuery.of(context).padding.top + kToolbarHeight;
 
     return Scaffold(
@@ -21,29 +23,27 @@ class ChildrenListScreen extends ConsumerWidget {
         error: (e, _) => Center(child: Text('Erreur : $e')),
         data: (children) {
           if (children.isEmpty) {
-            return SafeArea(
+            return Center(
               child: Padding(
-                padding: const EdgeInsets.only(top: kToolbarHeight),
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.child_care, size: 64, color: Colors.grey[400]),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Aucun enfant',
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleMedium
-                            ?.copyWith(color: Colors.grey),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Ajoutez votre premier enfant',
-                        style: TextStyle(color: Colors.grey[500]),
-                      ),
-                    ],
-                  ),
+                padding: EdgeInsets.only(top: topPadding),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.child_care, size: 64, color: cs.outlineVariant),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Aucun enfant',
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleMedium
+                          ?.copyWith(color: cs.onSurfaceVariant),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Ajoutez votre premier enfant',
+                      style: TextStyle(color: cs.onSurfaceVariant),
+                    ),
+                  ],
                 ),
               ),
             );
@@ -54,7 +54,13 @@ class ChildrenListScreen extends ConsumerWidget {
               bottom: 96,
             ),
             itemCount: children.length,
-            itemBuilder: (_, i) => ChildCard(child: children[i]),
+            itemBuilder: (_, i) => Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppTheme.pagePadding,
+                vertical: 4,
+              ),
+              child: ChildCard(child: children[i]),
+            ),
           );
         },
       ),

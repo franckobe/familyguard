@@ -2,8 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class AppTheme {
-  static const seedColor = Color(0xFF7C3AED); // Violet 600
+  AppTheme._();
 
+  // ── Couleurs ────────────────────────────────────────────────────────────────
+  static const Color seedColor = Color(0xFF7C3AED);
+
+  // ── Rayons (source unique — utilisés dans les component themes ET les écrans)
+  static const double rS = 10;   // petits éléments
+  static const double rM = 12;   // inputs, boutons, tuiles
+  static const double rL = 20;   // cartes
+  static const double rXL = 28;  // bottom sheets, grandes surfaces
+
+  // ── Espacement page
+  static const double pagePadding = 20;
+
+  // ── Thème ───────────────────────────────────────────────────────────────────
   static ThemeData get light {
     final cs = ColorScheme.fromSeed(
       seedColor: seedColor,
@@ -16,6 +29,7 @@ class AppTheme {
       splashFactory: NoSplash.splashFactory,
       highlightColor: Colors.transparent,
       splashColor: Colors.transparent,
+      // AppBar de fallback (pour les AppBar non-glass)
       appBarTheme: AppBarTheme(
         centerTitle: true,
         backgroundColor: Colors.white.withValues(alpha: 0.85),
@@ -35,34 +49,34 @@ class AppTheme {
         elevation: 0,
         color: cs.surfaceContainerLow,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(rL),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: cs.surfaceContainerLowest,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(rM),
           borderSide: BorderSide(color: cs.outlineVariant),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(rM),
           borderSide: BorderSide(color: cs.outlineVariant),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(rM),
           borderSide: BorderSide(color: cs.primary, width: 2),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(rM),
           borderSide: BorderSide(color: cs.error),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(rM),
           borderSide: BorderSide(color: cs.error, width: 2),
         ),
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
+          horizontal: pagePadding - 4,
           vertical: 14,
         ),
       ),
@@ -71,25 +85,25 @@ class AppTheme {
         foregroundColor: cs.onPrimary,
         elevation: 2,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(rM + 4),
         ),
       ),
       bottomSheetTheme: BottomSheetThemeData(
         showDragHandle: true,
         backgroundColor: cs.surface,
         shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(rXL)),
         ),
       ),
       listTileTheme: ListTileThemeData(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(rM),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(rM),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           textStyle: const TextStyle(
@@ -102,7 +116,7 @@ class AppTheme {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(rM),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           textStyle: const TextStyle(
@@ -115,7 +129,7 @@ class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(rM),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           textStyle: const TextStyle(
@@ -123,6 +137,11 @@ class AppTheme {
             fontWeight: FontWeight.w600,
             letterSpacing: -0.2,
           ),
+        ),
+      ),
+      dialogTheme: DialogThemeData(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(rL),
         ),
       ),
       textTheme: const TextTheme(
