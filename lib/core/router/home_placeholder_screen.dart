@@ -33,7 +33,11 @@ class HomePlaceholderScreen extends ConsumerWidget {
           children: [
             Text(greeting, style: Theme.of(context).textTheme.headlineSmall),
             const SizedBox(height: 16),
-            const Text('Sprint 2 à venir — Gestion des enfants'),
+            ElevatedButton.icon(
+              onPressed: () => context.push('/children'),
+              icon: const Icon(Icons.child_care),
+              label: const Text('Mes enfants'),
+            ),
           ],
         ),
       ),

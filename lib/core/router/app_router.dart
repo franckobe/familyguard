@@ -7,6 +7,10 @@ import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/register_screen.dart';
 import '../../features/auth/screens/forgot_password_screen.dart';
 import '../../features/auth/screens/edit_profile_screen.dart';
+import '../../features/children/models/child.dart';
+import '../../features/children/screens/child_detail_screen.dart';
+import '../../features/children/screens/children_list_screen.dart';
+import '../../features/children/screens/edit_child_screen.dart';
 import 'home_placeholder_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -38,6 +42,17 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/profile/edit',
         builder: (_, __) => const EditProfileScreen(),
+      ),
+      GoRoute(path: '/children', builder: (_, __) => const ChildrenListScreen()),
+      GoRoute(
+        path: '/children/:id',
+        builder: (_, state) =>
+            ChildDetailScreen(childId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/children/:id/edit',
+        builder: (_, state) =>
+            EditChildScreen(child: state.extra! as Child),
       ),
     ],
   );
