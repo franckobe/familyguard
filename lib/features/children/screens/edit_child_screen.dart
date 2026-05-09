@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -27,7 +27,7 @@ class _EditChildScreenState extends ConsumerState<EditChildScreen> {
   late final TextEditingController _medicalInfoCtrl;
   late final TextEditingController _notesCtrl;
   late DateTime _birthDate;
-  File? _newPhoto;
+  Uint8List? _newPhotoBytes;
   bool _loading = false;
 
   @override
@@ -59,7 +59,10 @@ class _EditChildScreenState extends ConsumerState<EditChildScreen> {
       maxHeight: 512,
       imageQuality: 80,
     );
-    if (xFile != null) setState(() => _newPhoto = File(xFile.path));
+    if (xFile != null) {
+      final bytes = await xFile.readAsBytes();
+      setState(() => _newPhotoBytes = bytes);
+    }
   }
 
   Future<void> _pickBirthDate() async {
@@ -129,7 +132,7 @@ class _EditChildScreenState extends ConsumerState<EditChildScreen> {
       );
       await ref
           .read(childRepositoryProvider)
-          .updateChild(updated, photo: _newPhoto);
+          .updateChild(updated, photo: _newPhotoBytes);
       if (mounted) context.pop();
     } catch (e) {
       if (mounted) {
@@ -172,12 +175,12 @@ class _EditChildScreenState extends ConsumerState<EditChildScreen> {
                   onTap: _pickPhoto,
                   child: CircleAvatar(
                     radius: 48,
-                    backgroundImage: _newPhoto != null
-                        ? FileImage(_newPhoto!) as ImageProvider
+                    backgroundImage: _newPhotoBytes != null
+                        ? MemoryImage(_newPhotoBytes!) as ImageProvider
                         : currentAvatarUrl != null
                             ? CachedNetworkImageProvider(currentAvatarUrl)
                             : null,
-                    child: (_newPhoto == null && currentAvatarUrl == null)
+                    child: (_newPhotoBytes == null && currentAvatarUrl == null)
                         ? const Icon(Icons.add_a_photo, size: 32)
                         : null,
                   ),

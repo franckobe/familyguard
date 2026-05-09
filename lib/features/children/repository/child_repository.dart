@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import '../models/child.dart';
@@ -39,7 +39,7 @@ class ChildRepository {
     String? allergies,
     String? medicalInfo,
     String? notes,
-    File? photo,
+    Uint8List? photo,
   }) async {
     final ref = _firestore.collection('children').doc();
     final now = DateTime.now();
@@ -62,7 +62,7 @@ class ChildRepository {
     });
   }
 
-  Future<void> updateChild(Child child, {File? photo}) async {
+  Future<void> updateChild(Child child, {Uint8List? photo}) async {
     String? avatarUrl = child.avatarUrl;
     if (photo != null) {
       avatarUrl = await _uploadPhoto(child.id, photo);
@@ -105,9 +105,12 @@ class ChildRepository {
     }
   }
 
-  Future<String> _uploadPhoto(String childId, File photo) async {
+  Future<String> _uploadPhoto(String childId, Uint8List bytes) async {
     final ref = _storage.ref('avatars/children/$childId.jpg');
-    await ref.putFile(photo);
+    await ref.putData(
+      bytes,
+      SettableMetadata(contentType: 'image/jpeg'),
+    );
     return ref.getDownloadURL();
   }
 }

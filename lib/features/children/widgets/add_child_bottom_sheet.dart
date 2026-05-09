@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -22,7 +22,7 @@ class _AddChildBottomSheetState extends ConsumerState<AddChildBottomSheet> {
   final _medicalInfoCtrl = TextEditingController();
   final _notesCtrl = TextEditingController();
   DateTime? _birthDate;
-  File? _photo;
+  Uint8List? _photoBytes;
   bool _loading = false;
   bool _showOptional = false;
 
@@ -43,7 +43,10 @@ class _AddChildBottomSheetState extends ConsumerState<AddChildBottomSheet> {
       maxHeight: 512,
       imageQuality: 80,
     );
-    if (xFile != null) setState(() => _photo = File(xFile.path));
+    if (xFile != null) {
+      final bytes = await xFile.readAsBytes();
+      setState(() => _photoBytes = bytes);
+    }
   }
 
   Future<void> _pickBirthDate() async {
@@ -82,7 +85,7 @@ class _AddChildBottomSheetState extends ConsumerState<AddChildBottomSheet> {
             : _medicalInfoCtrl.text.trim(),
         notes:
             _notesCtrl.text.trim().isEmpty ? null : _notesCtrl.text.trim(),
-        photo: _photo,
+        photo: _photoBytes,
       );
       if (mounted) Navigator.of(context).pop();
     } catch (e) {
@@ -116,9 +119,10 @@ class _AddChildBottomSheetState extends ConsumerState<AddChildBottomSheet> {
                   onTap: _pickPhoto,
                   child: CircleAvatar(
                     radius: 40,
-                    backgroundImage:
-                        _photo != null ? FileImage(_photo!) : null,
-                    child: _photo == null
+                    backgroundImage: _photoBytes != null
+                        ? MemoryImage(_photoBytes!)
+                        : null,
+                    child: _photoBytes == null
                         ? const Icon(Icons.add_a_photo, size: 32)
                         : null,
                   ),
