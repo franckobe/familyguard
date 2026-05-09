@@ -102,6 +102,7 @@ class AppTheme {
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
+          minimumSize: const Size(64, 56),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(rM),
           ),
@@ -115,6 +116,7 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
+          minimumSize: const Size(64, 56),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(rM),
           ),
@@ -128,6 +130,7 @@ class AppTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
+          minimumSize: const Size(64, 56),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(rM),
           ),
