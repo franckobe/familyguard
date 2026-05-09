@@ -26,7 +26,7 @@ class ChildCard extends StatelessWidget {
       title: Text('${child.firstName} ${child.lastName}'),
       subtitle: Text(child.ageLabel),
       trailing: const Icon(Icons.chevron_right),
-      onTap: () => context.push('/children/${child.id}'),
+      onTap: () => context.push('/children/${child.id}/edit', extra: child),
     );
   }
 }

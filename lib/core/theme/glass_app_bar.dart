@@ -41,6 +41,7 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       leading: effectiveLeading,
       automaticallyImplyLeading: false,
+      leadingWidth: 90,
       centerTitle: true,
       title: title,
       actions: actions,

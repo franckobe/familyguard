@@ -72,6 +72,44 @@ class _EditChildScreenState extends ConsumerState<EditChildScreen> {
     if (date != null) setState(() => _birthDate = date);
   }
 
+  Future<void> _delete() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Supprimer cet enfant ?'),
+        content: const Text(
+          'Cette action est irréversible. Les gardes passées seront conservées.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Annuler'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(ctx).colorScheme.error,
+            ),
+            child: const Text('Supprimer'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    setState(() => _loading = true);
+    try {
+      await ref.read(childRepositoryProvider).deleteChild(widget.child.id);
+      if (mounted) context.go('/children');
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Erreur : $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _loading = true);
@@ -189,6 +227,21 @@ class _EditChildScreenState extends ConsumerState<EditChildScreen> {
                 decoration: const InputDecoration(labelText: 'Notes'),
                 maxLines: 2,
               ),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: _loading ? null : _delete,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Theme.of(context).colorScheme.error,
+                    side: BorderSide(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                  child: const Text('Supprimer cet enfant'),
+                ),
+              ),
+              const SizedBox(height: 16),
             ],
           ),
         ),
