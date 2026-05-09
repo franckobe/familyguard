@@ -66,8 +66,9 @@ class Child with _$Child {
 
   String get ageLabel {
     final now = DateTime.now();
-    final months =
+    int months =
         (now.year - birthDate.year) * 12 + now.month - birthDate.month;
+    if (now.day < birthDate.day) months--;
     if (months < 1) return 'Nouveau-né';
     if (months < 12) return '$months mois';
     return '$ageInYears ans';

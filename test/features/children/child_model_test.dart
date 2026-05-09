@@ -93,13 +93,14 @@ void main() {
     });
 
     test('returns correct age for multi-year-old', () {
-      final fiveYearsAgo = DateTime(DateTime.now().year - 5, 1, 1);
+      // Dec 31 of 5 years ago — birthday hasn't passed in the current year
+      final fiveYearsAgo = DateTime(DateTime.now().year - 5, 12, 31);
       final child = Child(
         id: 't', parentId: 'p', firstName: 'T', lastName: 'T',
         birthDate: fiveYearsAgo, archived: false,
         createdAt: DateTime.now(), updatedAt: DateTime.now(),
       );
-      expect(child.ageInYears, greaterThanOrEqualTo(5));
+      expect(child.ageInYears, 4);
     });
   });
 
@@ -131,6 +132,17 @@ void main() {
         createdAt: DateTime.now(), updatedAt: DateTime.now(),
       );
       expect(child.ageLabel, contains('ans'));
+    });
+
+    test('treats exactly 12 months as 1 year', () {
+      final now = DateTime.now();
+      final exactlyOneYearAgo = DateTime(now.year - 1, now.month, now.day);
+      final child = Child(
+        id: 't', parentId: 'p', firstName: 'T', lastName: 'T',
+        birthDate: exactlyOneYearAgo, archived: false,
+        createdAt: now, updatedAt: now,
+      );
+      expect(child.ageLabel, '1 ans');
     });
   });
 }
