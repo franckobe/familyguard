@@ -77,7 +77,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   keyboardType: TextInputType.emailAddress,
                   decoration: const InputDecoration(
                     labelText: 'Email',
-                    border: OutlineInputBorder(),
                   ),
                   validator: (v) =>
                       (v == null || !v.contains('@')) ? 'Email invalide' : null,
@@ -88,7 +87,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   obscureText: true,
                   decoration: const InputDecoration(
                     labelText: 'Mot de passe',
-                    border: OutlineInputBorder(),
                   ),
                   validator: (v) =>
                       (v == null || v.length < 6) ? 'Min. 6 caractères' : null,

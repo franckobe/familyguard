@@ -10,7 +10,29 @@
       "Bash(flutterfire --version)",
       "Bash(firebase projects:list)",
       "Bash(firebase login:list *)",
-      "Bash(flutter create *)"
+      "Bash(flutter create *)",
+      "Bash(flutter pub *)",
+      "Bash(npm install *)",
+      "Bash(/usr/local/bin/npm --version)",
+      "Read(//usr/local/lib/node_modules/**)",
+      "Bash(export PATH=\"/usr/local/Cellar/node/23.3.0/bin:$PATH\")",
+      "Bash(npm --version)",
+      "Bash(/usr/local/Cellar/node/23.3.0/bin/npm install *)",
+      "Bash(node /usr/local/lib/node_modules/npm/bin/npm-cli.js install --prefix /Users/franckgarros/Documents/Dev/familyguard/functions)",
+      "Bash(/usr/local/opt/npm/bin/npm --version)",
+      "Bash(node /usr/local/lib/node_modules/corepack/dist/corepack.js enable npm)",
+      "Bash(node *)",
+      "Bash(brew list *)",
+      "Bash(brew --version)",
+      "Bash(dart analyze *)",
+      "Bash(flutter test *)",
+      "Bash(grep -v \"^$\")",
+      "Bash(flutter build *)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('project_id:', d['project_info']['project_id']\\); print\\('package_name:', d['client'][0]['client_info']['android_client_info']['android_package_name']\\)\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); c=d['client'][0]; info=c['client_info']; print\\('project_id:', d['project_info']['project_id']\\); print\\('package_name:', info.get\\('android_client_info', {}\\).get\\('android_package_name', info\\)\\)\")",
+      "Bash(grep -v \"^--$\\\\|key>\")",
+      "Bash(firebase deploy *)",
+      "Bash(dart run *)"
     ]
   }
 }

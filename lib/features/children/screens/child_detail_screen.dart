@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/theme/glass_app_bar.dart';
 import '../models/child.dart';
 import '../providers/children_providers.dart';
 
@@ -49,6 +50,7 @@ class ChildDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final childAsync = ref.watch(childDetailProvider(childId));
+    final topPadding = MediaQuery.of(context).padding.top + kToolbarHeight;
 
     return childAsync.when(
       loading: () =>
@@ -61,7 +63,8 @@ class ChildDetailScreen extends ConsumerWidget {
           );
         }
         return Scaffold(
-          appBar: AppBar(
+          extendBodyBehindAppBar: true,
+          appBar: GlassAppBar(
             title: Text('${child.firstName} ${child.lastName}'),
             actions: [
               IconButton(
@@ -72,7 +75,12 @@ class ChildDetailScreen extends ConsumerWidget {
             ],
           ),
           body: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
+            padding: EdgeInsets.only(
+              top: topPadding + 16,
+              left: 24,
+              right: 24,
+              bottom: 40,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
@@ -148,19 +156,20 @@ class _InfoTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(8),
+        color: cs.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             label,
-            style: const TextStyle(fontSize: 12, color: Colors.grey),
+            style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
           ),
           const SizedBox(height: 4),
           Text(value),

@@ -5,6 +5,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../core/theme/glass_app_bar.dart';
 import '../providers/auth_providers.dart';
 
 class EditProfileScreen extends ConsumerStatefulWidget {
@@ -95,7 +96,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   Widget build(BuildContext context) {
     final user = ref.watch(currentUserProvider).valueOrNull;
     return Scaffold(
-      appBar: AppBar(title: const Text('Mon profil')),
+      appBar: const GlassAppBar(title: Text('Mon profil')),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -127,7 +128,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   controller: _firstNameController,
                   decoration: const InputDecoration(
                     labelText: 'Prénom',
-                    border: OutlineInputBorder(),
                   ),
                   validator: (v) =>
                       (v == null || v.trim().isEmpty) ? 'Champ requis' : null,
@@ -137,7 +137,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   controller: _lastNameController,
                   decoration: const InputDecoration(
                     labelText: 'Nom',
-                    border: OutlineInputBorder(),
                   ),
                   validator: (v) =>
                       (v == null || v.trim().isEmpty) ? 'Champ requis' : null,
@@ -148,7 +147,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   keyboardType: TextInputType.phone,
                   decoration: const InputDecoration(
                     labelText: 'Téléphone (optionnel)',
-                    border: OutlineInputBorder(),
                   ),
                 ),
                 const SizedBox(height: 24),
