@@ -34,8 +34,15 @@ class ChildDetailScreen extends ConsumerWidget {
       ),
     );
     if (confirmed == true && context.mounted) {
-      await ref.read(childRepositoryProvider).deleteChild(child.id);
-      if (context.mounted) context.pop();
+      try {
+        await ref.read(childRepositoryProvider).deleteChild(child.id);
+        if (context.mounted) context.pop();
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text('Erreur : $e')));
+        }
+      }
     }
   }
 

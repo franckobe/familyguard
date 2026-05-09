@@ -80,13 +80,19 @@ class ChildRepository {
   }
 
   Future<void> deleteChild(String childId) async {
-    final guardReqs = await _firestore
-        .collection('guard_requests')
-        .where('childId', isEqualTo: childId)
-        .limit(1)
-        .get();
+    bool hasGuardRequests = false;
+    try {
+      final guardReqs = await _firestore
+          .collection('guard_requests')
+          .where('childId', isEqualTo: childId)
+          .limit(1)
+          .get();
+      hasGuardRequests = guardReqs.docs.isNotEmpty;
+    } catch (_) {
+      // guard_requests rules not deployed yet (Sprint 4) — treat as empty
+    }
 
-    if (guardReqs.docs.isNotEmpty) {
+    if (hasGuardRequests) {
       await _firestore.collection('children').doc(childId).update({
         'archived': true,
         'updatedAt': Timestamp.fromDate(DateTime.now()),
