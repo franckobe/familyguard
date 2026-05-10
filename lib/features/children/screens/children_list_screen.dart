@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
@@ -19,7 +20,23 @@ class ChildrenListScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: Colors.transparent,
       extendBodyBehindAppBar: true,
-      appBar: const GlassAppBar(title: Text('Mes enfants')),
+      appBar: GlassAppBar(
+        title: const Text('Mes enfants'),
+        actions: [
+          IconButton(
+            onPressed: () => showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              builder: (_) => const AddChildBottomSheet(),
+            ),
+            icon: const Icon(LucideIcons.plus, size: 20, color: AppColors.primaryLight),
+          ),
+          IconButton(
+            onPressed: () => context.push('/profile/edit'),
+            icon: const Icon(LucideIcons.userCircle2, size: 20, color: AppColors.primaryLight),
+          ),
+        ],
+      ),
       body: AppBackground(
         child: childrenAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
@@ -60,14 +77,6 @@ class ChildrenListScreen extends ConsumerWidget {
             );
           },
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => showModalBottomSheet(
-          context: context,
-          isScrollControlled: true,
-          builder: (_) => const AddChildBottomSheet(),
-        ),
-        child: const Icon(LucideIcons.plus),
       ),
     );
   }

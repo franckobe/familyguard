@@ -192,6 +192,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                           )
                         : const Text('Enregistrer'),
                   ),
+                  const SizedBox(height: 12),
+                  TextButton(
+                    onPressed: () => FirebaseAuth.instance.signOut(),
+                    child: const Text(
+                      'Se déconnecter',
+                      style: TextStyle(color: Color(0xFFF87171)),
+                    ),
+                  ),
                 ],
               ),
             ),
