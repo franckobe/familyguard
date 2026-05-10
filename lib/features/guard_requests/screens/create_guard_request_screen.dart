@@ -28,12 +28,14 @@ class CreateGuardRequestScreen extends ConsumerStatefulWidget {
 class _CreateGuardRequestScreenState
     extends ConsumerState<CreateGuardRequestScreen> {
   int _step = 0;
+  bool _childrenInitialized = false;
 
   // Step 1 state
   final Set<String> _selectedChildIds = {};
   DateTime _startAt = DateTime.now().add(const Duration(hours: 1));
   DateTime _endAt = DateTime.now().add(const Duration(hours: 3));
-  String _location = '';
+  String? _locationPreset; // 'chez_vous' | 'chez_nous' | 'autre' | null
+  String _locationCustom = '';
   String _notes = '';
   RecurrenceType _recurrenceType = RecurrenceType.none;
 
@@ -47,6 +49,14 @@ class _CreateGuardRequestScreenState
 
   GuardRequestType get _computedType =>
       GuardRequest.typeFromDuration(_startAt, _endAt);
+
+  String? get _resolvedLocation {
+    if (_locationPreset == null) return null;
+    if (_locationPreset == 'chez_vous') return 'Chez vous';
+    if (_locationPreset == 'chez_nous') return 'Chez nous';
+    final t = _locationCustom.trim();
+    return t.isEmpty ? null : t;
+  }
 
   Future<void> _pickDateTime({required bool isStart}) async {
     final now = DateTime.now();
@@ -103,6 +113,13 @@ class _CreateGuardRequestScreenState
   }
 
   Widget _buildStep1(List<Child> children) {
+    if (!_childrenInitialized && children.isNotEmpty) {
+      _childrenInitialized = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() => _selectedChildIds.addAll(children.map((c) => c.id)));
+      });
+    }
+
     final fmt = DateFormat('d MMM HH:mm', 'fr');
     final typeLabel = GuardRequest.labelFromDuration(_startAt, _endAt);
 
@@ -208,10 +225,13 @@ class _CreateGuardRequestScreenState
           }).toList(),
         ),
         const SizedBox(height: 20),
-        TextField(
-          style: const TextStyle(color: AppColors.textPrimary),
-          decoration: const InputDecoration(labelText: 'Lieu (optionnel)'),
-          onChanged: (v) => _location = v,
+        Text('Lieu', style: AppTextStyles.sectionLabel),
+        const SizedBox(height: 8),
+        _LocationPicker(
+          selected: _locationPreset,
+          customText: _locationCustom,
+          onPreset: (v) => setState(() => _locationPreset = v),
+          onCustomText: (v) => _locationCustom = v,
         ),
         const SizedBox(height: 16),
         TextField(
@@ -480,7 +500,7 @@ class _CreateGuardRequestScreenState
         type: _computedType,
         startAt: _startAt,
         endAt: _endAt,
-        location: _location.trim().isEmpty ? null : _location.trim(),
+        location: _resolvedLocation,
         notes: _notes.trim().isEmpty ? null : _notes.trim(),
         recurrenceType: _recurrenceType,
         recipientIds: _selectedRecipients.toList(),
@@ -500,6 +520,72 @@ class _CreateGuardRequestScreenState
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+}
+
+class _LocationPicker extends StatelessWidget {
+  const _LocationPicker({
+    required this.selected,
+    required this.customText,
+    required this.onPreset,
+    required this.onCustomText,
+  });
+
+  final String? selected;
+  final String customText;
+  final void Function(String?) onPreset;
+  final void Function(String) onCustomText;
+
+  static const _options = [
+    ('chez_vous', 'Chez vous'),
+    ('chez_nous', 'Chez nous'),
+    ('autre', 'Autre'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: _options.map((opt) {
+            final (value, label) = opt;
+            final isSelected = selected == value;
+            return Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: GestureDetector(
+                onTap: () => onPreset(isSelected ? null : value),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isSelected ? AppColors.glassPurpleSurface : AppColors.glassSurface,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isSelected ? AppColors.glassPurpleBorder : AppColors.glassBorder,
+                      width: 0.5,
+                    ),
+                  ),
+                  child: Text(
+                    label,
+                    style: AppTextStyles.cardTitle.copyWith(
+                      color: isSelected ? AppColors.badgeNewText : AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+        if (selected == 'autre') ...[
+          const SizedBox(height: 12),
+          TextField(
+            style: const TextStyle(color: AppColors.textPrimary),
+            decoration: const InputDecoration(labelText: 'Précisez le lieu'),
+            onChanged: onCustomText,
+          ),
+        ],
+      ],
+    );
   }
 }
 
