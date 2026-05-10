@@ -1,17 +1,20 @@
-import * as functions from 'firebase-functions';
+import { onDocumentUpdated } from 'firebase-functions/v2/firestore';
+import { logger } from 'firebase-functions/v2';
 
-export const onConnectionUpdated = functions.firestore
-  .document('connections/{connectionId}')
-  .onUpdate(async (change) => {
-    const before = change.before.data();
-    const after = change.after.data();
+export const onConnectionUpdated = onDocumentUpdated(
+  { document: 'connections/{connectionId}', region: 'europe-west1' },
+  async (event) => {
+    const before = event.data?.before.data();
+    const after = event.data?.after.data();
+    if (!before || !after) return;
 
     if (before.status === 'pending' && after.status === 'active') {
       // TODO Sprint 5 : envoyer push notification au parent
-      functions.logger.info('Connection activated', {
-        connectionId: change.after.id,
+      logger.info('Connection activated', {
+        connectionId: event.params.connectionId,
         parentId: after.parentId,
         caregiverId: after.caregiverId,
       });
     }
-  });
+  }
+);
