@@ -129,11 +129,28 @@ class GuardRequest with _$GuardRequest {
     return GuardRequestType.daily;
   }
 
-  String get typeLabel => switch (type) {
+  static String labelFromDuration(DateTime start, DateTime end) {
+    final type = typeFromDuration(start, end);
+    if (type == GuardRequestType.weekend) {
+      final days = (end.difference(start).inHours / 24).ceil();
+      return '$days jours';
+    }
+    return _staticLabel(type);
+  }
+
+  static String _staticLabel(GuardRequestType type) => switch (type) {
     GuardRequestType.hourly  => 'Quelques heures',
     GuardRequestType.halfDay => 'Demi-journée',
     GuardRequestType.daily   => 'Journée',
     GuardRequestType.night   => 'Nuit',
-    GuardRequestType.weekend => 'Week-end',
+    GuardRequestType.weekend => 'Plusieurs jours',
   };
+
+  String get typeLabel {
+    if (type == GuardRequestType.weekend) {
+      final days = (endAt.difference(startAt).inHours / 24).ceil();
+      return '$days jours';
+    }
+    return _staticLabel(type);
+  }
 }

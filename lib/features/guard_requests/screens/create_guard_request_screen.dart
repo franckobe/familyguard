@@ -104,13 +104,7 @@ class _CreateGuardRequestScreenState
 
   Widget _buildStep1(List<Child> children) {
     final fmt = DateFormat('d MMM HH:mm', 'fr');
-    final typeLabel = switch (_computedType) {
-      GuardRequestType.hourly  => 'Quelques heures',
-      GuardRequestType.halfDay => 'Demi-journée',
-      GuardRequestType.daily   => 'Journée',
-      GuardRequestType.night   => 'Nuit',
-      GuardRequestType.weekend => 'Week-end',
-    };
+    final typeLabel = GuardRequest.labelFromDuration(_startAt, _endAt);
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
