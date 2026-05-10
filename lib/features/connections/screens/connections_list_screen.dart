@@ -42,6 +42,12 @@ class _ConnectionsListScreenState extends ConsumerState<ConnectionsListScreen>
       extendBodyBehindAppBar: true,
       appBar: GlassAppBar(
         title: const Text('Connexions'),
+        actions: [
+          IconButton(
+            onPressed: () => context.push('/connections/invite'),
+            icon: const Icon(LucideIcons.userPlus, size: 20, color: AppColors.primaryLight),
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           labelColor: AppColors.badgeNewText,
@@ -101,10 +107,6 @@ class _ConnectionsListScreenState extends ConsumerState<ConnectionsListScreen>
             ),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push('/connections/invite'),
-        child: const Icon(LucideIcons.userPlus),
       ),
     );
   }
