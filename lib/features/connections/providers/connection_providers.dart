@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../auth/providers/auth_providers.dart';
 import '../models/connection.dart';
@@ -18,6 +19,12 @@ final connectionsAsCaregiverProvider = StreamProvider<List<Connection>>((ref) {
   final user = ref.watch(authStateProvider).valueOrNull;
   if (user == null) return Stream.value([]);
   return ref.read(connectionRepositoryProvider).streamAsCaregiver(user.uid);
+});
+
+final pendingInvitationsProvider = StreamProvider<List<Connection>>((ref) {
+  final email = FirebaseAuth.instance.currentUser?.email;
+  if (email == null) return Stream.value([]);
+  return ref.read(connectionRepositoryProvider).streamPendingByEmail(email);
 });
 
 final inviteDetailsProvider = FutureProvider.family<Map<String, dynamic>, String>(

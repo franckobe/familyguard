@@ -56,6 +56,15 @@ class ConnectionRepository {
     });
   }
 
+  Stream<List<Connection>> streamPendingByEmail(String email) {
+    return _firestore
+        .collection('connections')
+        .where('inviteEmail', isEqualTo: email)
+        .where('status', isEqualTo: 'pending')
+        .snapshots()
+        .map((s) => s.docs.map(Connection.fromFirestore).toList());
+  }
+
   Future<Map<String, dynamic>> getInviteDetails(String inviteCode) async {
     final result = await _ff
         .httpsCallable('getInviteDetails')

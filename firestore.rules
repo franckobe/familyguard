@@ -22,7 +22,8 @@ service cloud.firestore {
     match /connections/{connectionId} {
       allow read: if isAuth() &&
         (request.auth.uid == resource.data.parentId ||
-         request.auth.uid == resource.data.caregiverId);
+         request.auth.uid == resource.data.caregiverId ||
+         request.auth.token.email == resource.data.inviteEmail);
 
       allow create: if isAuth() &&
         isOwner(request.resource.data.parentId);

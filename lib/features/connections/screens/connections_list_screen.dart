@@ -6,6 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/glass_app_bar.dart';
 import '../../../core/widgets/app_background.dart';
+import '../models/connection.dart';
 import '../providers/connection_providers.dart';
 import '../widgets/connection_card.dart';
 
@@ -36,6 +37,7 @@ class _ConnectionsListScreenState extends ConsumerState<ConnectionsListScreen>
   Widget build(BuildContext context) {
     final asParentAsync = ref.watch(connectionsAsParentProvider);
     final asCaregiverAsync = ref.watch(connectionsAsCaregiverProvider);
+    final pendingAsync = ref.watch(pendingInvitationsProvider);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -85,28 +87,146 @@ class _ConnectionsListScreenState extends ConsumerState<ConnectionsListScreen>
                 );
               },
             ),
-            asCaregiverAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(
-                child: Text('Erreur : $e', style: AppTextStyles.cardSubtitle),
-              ),
-              data: (connections) {
-                if (connections.isEmpty) {
-                  return const _EmptyState(
-                    icon: LucideIcons.users,
-                    message: 'Pas encore de famille',
-                    subtitle: 'Acceptez une invitation pour apparaître ici',
-                  );
-                }
-                return ListView.builder(
-                  padding: const EdgeInsets.only(top: kToolbarHeight + 80, bottom: 96),
-                  itemCount: connections.length,
-                  itemBuilder: (_, i) => ConnectionCard(connection: connections[i]),
-                );
-              },
+            _CaregiverTab(
+              caregiverAsync: asCaregiverAsync,
+              pendingAsync: pendingAsync,
+              repo: ref.read(connectionRepositoryProvider),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _CaregiverTab extends StatelessWidget {
+  const _CaregiverTab({
+    required this.caregiverAsync,
+    required this.pendingAsync,
+    required this.repo,
+  });
+
+  final AsyncValue<List<Connection>> caregiverAsync;
+  final AsyncValue<List<Connection>> pendingAsync;
+  final dynamic repo;
+
+  @override
+  Widget build(BuildContext context) {
+    final pending = pendingAsync.valueOrNull ?? [];
+    final active = caregiverAsync.valueOrNull ?? [];
+    final loading = caregiverAsync.isLoading || pendingAsync.isLoading;
+
+    if (loading) return const Center(child: CircularProgressIndicator());
+
+    if (pending.isEmpty && active.isEmpty) {
+      return const _EmptyState(
+        icon: LucideIcons.users,
+        message: 'Pas encore de famille',
+        subtitle: 'Un parent doit vous inviter dans l\'app',
+      );
+    }
+
+    return ListView(
+      padding: const EdgeInsets.only(top: kToolbarHeight + 80, bottom: 96),
+      children: [
+        if (pending.isNotEmpty) ...[
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Text('Invitations en attente', style: AppTextStyles.cardSubtitle),
+          ),
+          ...pending.map((c) => _PendingInviteCard(connection: c, repo: repo)),
+          const SizedBox(height: 8),
+        ],
+        if (active.isNotEmpty) ...[
+          if (pending.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Text('Mes familles', style: AppTextStyles.cardSubtitle),
+            ),
+          ...active.map((c) => ConnectionCard(connection: c)),
+        ],
+      ],
+    );
+  }
+}
+
+class _PendingInviteCard extends StatefulWidget {
+  const _PendingInviteCard({required this.connection, required this.repo});
+
+  final Connection connection;
+  final dynamic repo;
+
+  @override
+  State<_PendingInviteCard> createState() => _PendingInviteCardState();
+}
+
+class _PendingInviteCardState extends State<_PendingInviteCard> {
+  bool _loading = false;
+
+  Future<void> _accept() async {
+    final code = widget.connection.inviteCode;
+    if (code == null) return;
+    setState(() => _loading = true);
+    try {
+      await widget.repo.acceptInvite(code);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur : $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = widget.connection;
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.glassSurface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.primaryLight.withOpacity(0.4), width: 0.8),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 44, height: 44,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.15),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(LucideIcons.mail, size: 20, color: AppColors.primaryLight),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Invitation reçue', style: AppTextStyles.cardTitle),
+                Text(c.inviteEmail, style: AppTextStyles.cardSubtitle, overflow: TextOverflow.ellipsis),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          _loading
+              ? const SizedBox(
+                  width: 20, height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primaryLight),
+                )
+              : FilledButton(
+                  onPressed: c.inviteCode != null ? _accept : null,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: const Text('Accepter', style: TextStyle(fontSize: 13)),
+                ),
+        ],
       ),
     );
   }
