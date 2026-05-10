@@ -28,7 +28,7 @@ const TS = admin.firestore.Timestamp;
 const daysAgo = (n) =>
   TS.fromDate(new Date(Date.now() - n * 24 * 60 * 60 * 1000));
 
-const SEED_TAG = '__seed__';
+const SEED_TAG = '_seeded';
 
 // ---------------------------------------------------------------------------
 // Fake user profiles (no real Auth account needed — just Firestore docs)
