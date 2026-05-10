@@ -84,30 +84,45 @@ class _CreateGuardRequestScreenState
 
   Future<void> _pickOccurrence() async {
     final now = DateTime.now();
-    final date = await showDatePicker(
+
+    final startDate = await showDatePicker(
       context: context,
       initialDate: now.add(const Duration(days: 1)),
       firstDate: now,
       lastDate: now.add(const Duration(days: 365)),
       locale: const Locale('fr'),
     );
-    if (date == null || !mounted) return;
+    if (startDate == null || !mounted) return;
+
     final startTime = await showTimePicker(
       context: context,
       initialTime: const TimeOfDay(hour: 9, minute: 0),
     );
     if (startTime == null || !mounted) return;
+
+    final start = DateTime(
+        startDate.year, startDate.month, startDate.day, startTime.hour, startTime.minute);
+
+    final endDate = await showDatePicker(
+      context: context,
+      initialDate: startDate,
+      firstDate: startDate,
+      lastDate: startDate.add(const Duration(days: 14)),
+      locale: const Locale('fr'),
+    );
+    if (endDate == null || !mounted) return;
+
     final endTime = await showTimePicker(
       context: context,
       initialTime: const TimeOfDay(hour: 17, minute: 0),
     );
     if (endTime == null || !mounted) return;
-    setState(() {
-      _occurrences.add((
-        DateTime(date.year, date.month, date.day, startTime.hour, startTime.minute),
-        DateTime(date.year, date.month, date.day, endTime.hour, endTime.minute),
-      ));
-    });
+
+    final end = DateTime(
+        endDate.year, endDate.month, endDate.day, endTime.hour, endTime.minute);
+
+    if (!end.isAfter(start) || !mounted) return;
+    setState(() => _occurrences.add((start, end)));
   }
 
   Widget _buildStep1(List<Child> children) {
@@ -364,7 +379,9 @@ class _CreateGuardRequestScreenState
   }
 
   bool get _canProceedStep1 =>
-      _selectedChildIds.isNotEmpty && _endAt.isAfter(_startAt);
+      _selectedChildIds.isNotEmpty &&
+      _endAt.isAfter(_startAt) &&
+      _resolvedLocation != null;
 
   @override
   Widget build(BuildContext context) {
