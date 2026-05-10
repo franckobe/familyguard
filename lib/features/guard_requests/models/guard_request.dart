@@ -7,6 +7,32 @@ enum GuardRequestType { hourly, halfDay, daily, night, weekend }
 enum GuardRequestStatus { open, accepted, done, cancelled, expired }
 enum RecurrenceType { none, custom }
 
+enum LocationPreset {
+  parentHouse,
+  caregiverHouse,
+  other;
+
+  /// Value stored in Firestore (for parentHouse / caregiverHouse).
+  /// For [other], the free-text value is stored directly — don't call this.
+  String get storedValue => switch (this) {
+    LocationPreset.parentHouse    => 'parent_house',
+    LocationPreset.caregiverHouse => 'caregiver_house',
+    LocationPreset.other          => 'other',
+  };
+
+  String get label => switch (this) {
+    LocationPreset.parentHouse    => 'Chez le parent',
+    LocationPreset.caregiverHouse => 'Chez le babysitter',
+    LocationPreset.other          => 'Autre',
+  };
+
+  static LocationPreset? fromStoredValue(String? value) => switch (value) {
+    'parent_house'    => LocationPreset.parentHouse,
+    'caregiver_house' => LocationPreset.caregiverHouse,
+    _                 => null,
+  };
+}
+
 class ChildSnapshot {
   const ChildSnapshot({
     required this.firstName,
@@ -151,9 +177,6 @@ class GuardRequest with _$GuardRequest {
     return _staticLabel(type);
   }
 
-  String? get locationLabel => switch (location) {
-    'parent_house'    => 'Chez le parent',
-    'caregiver_house' => 'Chez le babysitter',
-    _                 => location,
-  };
+  String? get locationLabel =>
+      LocationPreset.fromStoredValue(location)?.label ?? location;
 }

@@ -34,7 +34,7 @@ class _CreateGuardRequestScreenState
   final Set<String> _selectedChildIds = {};
   DateTime _startAt = DateTime.now().add(const Duration(hours: 1));
   DateTime _endAt = DateTime.now().add(const Duration(hours: 3));
-  String? _locationPreset; // 'chez_vous' | 'chez_nous' | 'autre' | null
+  LocationPreset? _locationPreset;
   String _locationCustom = '';
   String _notes = '';
   RecurrenceType _recurrenceType = RecurrenceType.none;
@@ -50,13 +50,11 @@ class _CreateGuardRequestScreenState
   GuardRequestType get _computedType =>
       GuardRequest.typeFromDuration(_startAt, _endAt);
 
-  String? get _resolvedLocation {
-    if (_locationPreset == null) return null;
-    if (_locationPreset == 'chez_moi') return 'parent_house';
-    if (_locationPreset == 'chez_babysitter') return 'caregiver_house';
-    final t = _locationCustom.trim();
-    return t.isEmpty ? null : t;
-  }
+  String? get _resolvedLocation => switch (_locationPreset) {
+    null                          => null,
+    LocationPreset.other          => _locationCustom.trim().isEmpty ? null : _locationCustom.trim(),
+    final p                       => p.storedValue,
+  };
 
   Future<void> _pickDateTime({required bool isStart}) async {
     final now = DateTime.now();
@@ -531,16 +529,10 @@ class _LocationPicker extends StatelessWidget {
     required this.onCustomText,
   });
 
-  final String? selected;
+  final LocationPreset? selected;
   final String customText;
-  final void Function(String?) onPreset;
+  final void Function(LocationPreset?) onPreset;
   final void Function(String) onCustomText;
-
-  static const _options = [
-    ('chez_moi', 'Chez moi'),
-    ('chez_babysitter', 'Chez le babysitter'),
-    ('autre', 'Autre'),
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -550,11 +542,10 @@ class _LocationPicker extends StatelessWidget {
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: _options.map((opt) {
-            final (value, label) = opt;
-            final isSelected = selected == value;
+          children: LocationPreset.values.map((preset) {
+            final isSelected = selected == preset;
             return GestureDetector(
-              onTap: () => onPreset(isSelected ? null : value),
+              onTap: () => onPreset(isSelected ? null : preset),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
@@ -566,7 +557,7 @@ class _LocationPicker extends StatelessWidget {
                   ),
                 ),
                 child: Text(
-                  label,
+                  preset.label,
                   style: AppTextStyles.cardTitle.copyWith(
                     color: isSelected ? AppColors.badgeNewText : AppColors.textPrimary,
                   ),
@@ -575,7 +566,7 @@ class _LocationPicker extends StatelessWidget {
             );
           }).toList(),
         ),
-        if (selected == 'autre') ...[
+        if (selected == LocationPreset.other) ...[
           const SizedBox(height: 12),
           TextField(
             autofocus: true,
