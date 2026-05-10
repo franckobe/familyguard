@@ -12,10 +12,14 @@ export async function sendPushToUser(
     logger.info('No FCM token for user', { uid });
     return;
   }
-  await admin.messaging().send({
-    token: fcmToken,
-    notification: { title, body },
-    apns: { payload: { aps: { sound: 'default' } } },
-    android: { notification: { sound: 'default' } },
-  });
+  try {
+    await admin.messaging().send({
+      token: fcmToken,
+      notification: { title, body },
+      apns: { payload: { aps: { sound: 'default' } } },
+      android: { notification: { sound: 'default' } },
+    });
+  } catch (err) {
+    logger.error('Failed to send push notification', { uid, error: err });
+  }
 }
