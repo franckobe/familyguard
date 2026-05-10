@@ -184,9 +184,11 @@ class _PendingInviteCardState extends ConsumerState<_PendingInviteCard> {
   Widget build(BuildContext context) {
     final c = widget.connection;
     final parentAsync = ref.watch(userByIdProvider(c.parentId));
-    final parentName = parentAsync.valueOrNull != null
-        ? '${parentAsync.value!.firstName} ${parentAsync.value!.lastName}'.trim()
-        : null;
+    final parent = parentAsync.valueOrNull;
+    final firstName = parent?.firstName ?? '';
+    final lastName = parent?.lastName ?? '';
+    final parentName = '$firstName $lastName'.trim();
+    final hasName = parentName.isNotEmpty;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
@@ -215,12 +217,11 @@ class _PendingInviteCardState extends ConsumerState<_PendingInviteCard> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      parentName != null && parentName.isNotEmpty
-                          ? '$parentName vous invite'
-                          : 'Invitation reçue',
+                      hasName ? '$parentName vous invite' : 'Invitation reçue',
                       style: AppTextStyles.cardTitle,
                     ),
-                    Text('via ${c.inviteEmail}', style: AppTextStyles.cardSubtitle, overflow: TextOverflow.ellipsis),
+                    if (!hasName)
+                      Text(c.inviteEmail, style: AppTextStyles.cardSubtitle, overflow: TextOverflow.ellipsis),
                   ],
                 ),
               ),
