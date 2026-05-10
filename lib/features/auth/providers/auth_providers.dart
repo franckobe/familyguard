@@ -16,3 +16,8 @@ final currentUserProvider = StreamProvider<AppUser?>((ref) {
       .snapshots()
       .map((doc) => doc.exists ? AppUser.fromFirestore(doc) : null);
 });
+
+final userByIdProvider = FutureProvider.family<AppUser?, String>((ref, uid) async {
+  final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+  return doc.exists ? AppUser.fromFirestore(doc) : null;
+});

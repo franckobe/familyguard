@@ -6,6 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/glass_app_bar.dart';
 import '../../../core/widgets/app_background.dart';
+import '../../../features/auth/providers/auth_providers.dart';
 import '../models/connection.dart';
 import '../providers/connection_providers.dart';
 import '../widgets/connection_card.dart';
@@ -150,17 +151,17 @@ class _CaregiverTab extends StatelessWidget {
   }
 }
 
-class _PendingInviteCard extends StatefulWidget {
+class _PendingInviteCard extends ConsumerStatefulWidget {
   const _PendingInviteCard({required this.connection, required this.repo});
 
   final Connection connection;
   final dynamic repo;
 
   @override
-  State<_PendingInviteCard> createState() => _PendingInviteCardState();
+  ConsumerState<_PendingInviteCard> createState() => _PendingInviteCardState();
 }
 
-class _PendingInviteCardState extends State<_PendingInviteCard> {
+class _PendingInviteCardState extends ConsumerState<_PendingInviteCard> {
   bool _loading = false;
 
   Future<void> _accept() async {
@@ -182,6 +183,11 @@ class _PendingInviteCardState extends State<_PendingInviteCard> {
   @override
   Widget build(BuildContext context) {
     final c = widget.connection;
+    final parentAsync = ref.watch(userByIdProvider(c.parentId));
+    final parentName = parentAsync.valueOrNull != null
+        ? '${parentAsync.value!.firstName} ${parentAsync.value!.lastName}'.trim()
+        : null;
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
       padding: const EdgeInsets.all(14),
@@ -190,41 +196,51 @@ class _PendingInviteCardState extends State<_PendingInviteCard> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.primaryLight.withOpacity(0.4), width: 0.8),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 44, height: 44,
-            decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.15),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(LucideIcons.mail, size: 20, color: AppColors.primaryLight),
+          Row(
+            children: [
+              Container(
+                width: 44, height: 44,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(LucideIcons.mail, size: 20, color: AppColors.primaryLight),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      parentName != null && parentName.isNotEmpty
+                          ? '$parentName vous invite'
+                          : 'Invitation reçue',
+                      style: AppTextStyles.cardTitle,
+                    ),
+                    Text('via ${c.inviteEmail}', style: AppTextStyles.cardSubtitle, overflow: TextOverflow.ellipsis),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Invitation reçue', style: AppTextStyles.cardTitle),
-                Text(c.inviteEmail, style: AppTextStyles.cardSubtitle, overflow: TextOverflow.ellipsis),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
+          const SizedBox(height: 12),
           _loading
-              ? const SizedBox(
-                  width: 20, height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primaryLight),
-                )
-              : FilledButton(
-                  onPressed: c.inviteCode != null ? _accept : null,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ? const Center(
+                  child: SizedBox(
+                    width: 24, height: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primaryLight),
                   ),
-                  child: const Text('Accepter', style: TextStyle(fontSize: 13)),
+                )
+              : SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: c.inviteCode != null ? _accept : null,
+                    style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
+                    child: const Text('Accepter l\'invitation'),
+                  ),
                 ),
         ],
       ),
