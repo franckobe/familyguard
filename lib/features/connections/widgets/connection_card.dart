@@ -18,7 +18,7 @@ class ConnectionCard extends ConsumerWidget {
   String _dateLabel(Connection c) {
     final fmt = DateFormat('d MMM yyyy', 'fr');
     return switch (c.status) {
-      ConnectionStatus.active   => 'Membre depuis le ${fmt.format(c.updatedAt)}',
+      ConnectionStatus.active   => 'Connecté depuis le ${fmt.format(c.updatedAt)}',
       ConnectionStatus.pending  => 'Invité le ${fmt.format(c.createdAt)}',
       ConnectionStatus.declined => 'Refusé le ${fmt.format(c.updatedAt)}',
       ConnectionStatus.blocked  => 'Bloqué le ${fmt.format(c.updatedAt)}',
