@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/avatar_initials.dart';
@@ -13,6 +14,16 @@ class ConnectionCard extends ConsumerWidget {
   const ConnectionCard({super.key, required this.connection});
 
   final Connection connection;
+
+  String _dateLabel(Connection c) {
+    final fmt = DateFormat('d MMM yyyy', 'fr');
+    return switch (c.status) {
+      ConnectionStatus.active   => 'Membre depuis le ${fmt.format(c.updatedAt)}',
+      ConnectionStatus.pending  => 'Invité le ${fmt.format(c.createdAt)}',
+      ConnectionStatus.declined => 'Refusé le ${fmt.format(c.updatedAt)}',
+      ConnectionStatus.blocked  => 'Bloqué le ${fmt.format(c.updatedAt)}',
+    };
+  }
 
   BadgeStatus get _badge => switch (connection.status) {
     ConnectionStatus.pending  => BadgeStatus.waiting,
@@ -53,8 +64,19 @@ class ConnectionCard extends ConsumerWidget {
             AvatarInitials(initials: initials, size: 44),
             const SizedBox(width: 12),
             Expanded(
-              child: Text(label, style: AppTextStyles.cardTitle, overflow: TextOverflow.ellipsis),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label, style: AppTextStyles.cardTitle, overflow: TextOverflow.ellipsis),
+                  const SizedBox(height: 2),
+                  Text(
+                    _dateLabel(connection),
+                    style: AppTextStyles.cardSubtitle,
+                  ),
+                ],
+              ),
             ),
+            const SizedBox(width: 8),
             StatusBadge(status: _badge),
           ],
         ),
