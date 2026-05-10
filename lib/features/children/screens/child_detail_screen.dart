@@ -2,8 +2,14 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/theme/app_theme.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/glass_app_bar.dart';
+import '../../../core/widgets/app_background.dart';
+import '../../../core/widgets/avatar_initials.dart';
+import '../../../core/widgets/glass_card.dart';
+import '../../../core/widgets/section_label.dart';
 import '../models/child.dart';
 import '../providers/children_providers.dart';
 
@@ -29,9 +35,7 @@ class ChildDetailScreen extends ConsumerWidget {
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            style: TextButton.styleFrom(
-              foregroundColor: Theme.of(ctx).colorScheme.error,
-            ),
+            style: TextButton.styleFrom(foregroundColor: const Color(0xFFF87171)),
             child: const Text('Supprimer'),
           ),
         ],
@@ -53,99 +57,92 @@ class ChildDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final childAsync = ref.watch(childDetailProvider(childId));
-    final cs = Theme.of(context).colorScheme;
-    final topPadding = MediaQuery.of(context).padding.top + kToolbarHeight;
 
     return childAsync.when(
-      loading: () =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (e, _) => Scaffold(body: Center(child: Text('Erreur : $e'))),
+      loading: () => const Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Center(child: CircularProgressIndicator()),
+      ),
+      error: (e, _) => Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Center(child: Text('Erreur : $e')),
+      ),
       data: (child) {
         if (child == null) {
           return const Scaffold(
+            backgroundColor: Colors.transparent,
             body: Center(child: Text('Enfant introuvable')),
           );
         }
+        final initials = '${child.firstName[0]}${child.lastName[0]}';
+
         return Scaffold(
+          backgroundColor: Colors.transparent,
           extendBodyBehindAppBar: true,
           appBar: GlassAppBar(
             title: Text('${child.firstName} ${child.lastName}'),
             actions: [
               IconButton(
-                icon: const Icon(Icons.edit),
+                icon: const Icon(LucideIcons.pencil, size: 20, color: AppColors.primaryLight),
                 onPressed: () =>
                     context.push('/children/${child.id}/edit', extra: child),
               ),
             ],
           ),
-          body: SingleChildScrollView(
-            padding: EdgeInsets.only(
-              top: topPadding + AppTheme.pagePadding,
-              left: AppTheme.pagePadding,
-              right: AppTheme.pagePadding,
-              bottom: AppTheme.pagePadding * 2,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                CircleAvatar(
-                  radius: 60,
-                  backgroundColor: cs.primaryContainer,
-                  backgroundImage: child.avatarUrl != null
-                      ? CachedNetworkImageProvider(child.avatarUrl!)
-                      : null,
-                  child: child.avatarUrl == null
-                      ? Text(
-                          '${child.firstName[0]}${child.lastName[0]}',
-                          style: TextStyle(
-                            fontSize: 36,
-                            fontWeight: FontWeight.w600,
-                            color: cs.onPrimaryContainer,
-                          ),
-                        )
-                      : null,
+          body: AppBackground(
+            child: SafeArea(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const SizedBox(height: 8),
+                    child.avatarUrl != null
+                        ? CircleAvatar(
+                            radius: 60,
+                            backgroundImage: CachedNetworkImageProvider(child.avatarUrl!),
+                          )
+                        : AvatarInitials(initials: initials, size: 120),
+                    const SizedBox(height: 16),
+                    Text(
+                      '${child.firstName} ${child.lastName}',
+                      style: AppTextStyles.screenTitle,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(child.ageLabel, style: AppTextStyles.greeting),
+                    const SizedBox(height: 24),
+                    if (child.allergies != null || child.medicalInfo != null || child.notes != null) ...[
+                      GlassCard(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SectionLabel('Informations'),
+                            if (child.allergies != null) ...[
+                              _InfoRow(label: 'Allergies', value: child.allergies!),
+                              const SizedBox(height: 12),
+                            ],
+                            if (child.medicalInfo != null) ...[
+                              _InfoRow(label: 'Médical', value: child.medicalInfo!),
+                              const SizedBox(height: 12),
+                            ],
+                            if (child.notes != null)
+                              _InfoRow(label: 'Notes', value: child.notes!),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+                    OutlinedButton.icon(
+                      onPressed: () => _confirmDelete(context, ref, child),
+                      icon: const Icon(LucideIcons.trash2, size: 18, color: Color(0xFFF87171)),
+                      label: const Text('Supprimer', style: TextStyle(color: Color(0xFFF87171))),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Color(0x33F87171), width: 0.5),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  '${child.firstName} ${child.lastName}',
-                  style: Theme.of(context).textTheme.headlineSmall,
-                ),
-                Text(
-                  child.ageLabel,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyLarge
-                      ?.copyWith(color: cs.onSurfaceVariant),
-                ),
-                const SizedBox(height: 24),
-                if (child.allergies != null) ...[
-                  _InfoTile(label: 'Allergies', value: child.allergies!),
-                  const SizedBox(height: 8),
-                ],
-                if (child.medicalInfo != null) ...[
-                  _InfoTile(
-                    label: 'Informations médicales',
-                    value: child.medicalInfo!,
-                  ),
-                  const SizedBox(height: 8),
-                ],
-                if (child.notes != null) ...[
-                  _InfoTile(label: 'Notes', value: child.notes!),
-                  const SizedBox(height: 8),
-                ],
-                const SizedBox(height: 32),
-                OutlinedButton.icon(
-                  onPressed: () => _confirmDelete(context, ref, child),
-                  icon: Icon(Icons.delete_outline, color: cs.error),
-                  label: Text(
-                    'Supprimer',
-                    style: TextStyle(color: cs.error),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: cs.error),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         );
@@ -154,33 +151,21 @@ class ChildDetailScreen extends ConsumerWidget {
   }
 }
 
-class _InfoTile extends StatelessWidget {
-  const _InfoTile({required this.label, required this.value});
+class _InfoRow extends StatelessWidget {
+  const _InfoRow({required this.label, required this.value});
 
   final String label;
   final String value;
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: cs.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(AppTheme.rM),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
-          ),
-          const SizedBox(height: 4),
-          Text(value, style: TextStyle(color: cs.onSurface)),
-        ],
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label.toUpperCase(), style: AppTextStyles.sectionLabel),
+        const SizedBox(height: 4),
+        Text(value, style: AppTextStyles.cardTitle),
+      ],
     );
   }
 }

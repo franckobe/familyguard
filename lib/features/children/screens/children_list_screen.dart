@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/theme/app_theme.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/glass_app_bar.dart';
+import '../../../core/widgets/app_background.dart';
 import '../providers/children_providers.dart';
 import '../widgets/add_child_bottom_sheet.dart';
 import '../widgets/child_card.dart';
@@ -12,57 +15,51 @@ class ChildrenListScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final childrenAsync = ref.watch(childrenProvider);
-    final cs = Theme.of(context).colorScheme;
-    final topPadding = MediaQuery.of(context).padding.top + kToolbarHeight;
 
     return Scaffold(
+      backgroundColor: Colors.transparent,
       extendBodyBehindAppBar: true,
       appBar: const GlassAppBar(title: Text('Mes enfants')),
-      body: childrenAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Erreur : $e')),
-        data: (children) {
-          if (children.isEmpty) {
-            return Center(
-              child: Padding(
-                padding: EdgeInsets.only(top: topPadding),
+      body: AppBackground(
+        child: childrenAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, _) => Center(child: Text('Erreur : $e', style: AppTextStyles.cardSubtitle)),
+          data: (children) {
+            if (children.isEmpty) {
+              return Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.child_care, size: 64, color: cs.outlineVariant),
+                    Container(
+                      width: 72, height: 72,
+                      decoration: BoxDecoration(
+                        color: AppColors.glassSurface,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.glassBorder, width: 0.5),
+                      ),
+                      child: const Icon(LucideIcons.baby, size: 32, color: AppColors.textTertiary),
+                    ),
                     const SizedBox(height: 16),
-                    Text(
-                      'Aucun enfant',
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleMedium
-                          ?.copyWith(color: cs.onSurfaceVariant),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Ajoutez votre premier enfant',
-                      style: TextStyle(color: cs.onSurfaceVariant),
-                    ),
+                    Text('Aucun enfant', style: AppTextStyles.cardTitle),
+                    const SizedBox(height: 4),
+                    Text('Ajoutez votre premier enfant', style: AppTextStyles.cardSubtitle),
                   ],
                 ),
+              );
+            }
+            return ListView.builder(
+              padding: const EdgeInsets.only(
+                top: kToolbarHeight + 56,
+                bottom: 96,
+              ),
+              itemCount: children.length,
+              itemBuilder: (_, i) => Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
+                child: ChildCard(child: children[i]),
               ),
             );
-          }
-          return ListView.builder(
-            padding: EdgeInsets.only(
-              top: topPadding + 8,
-              bottom: 96,
-            ),
-            itemCount: children.length,
-            itemBuilder: (_, i) => Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppTheme.pagePadding,
-                vertical: 4,
-              ),
-              child: ChildCard(child: children[i]),
-            ),
-          );
-        },
+          },
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => showModalBottomSheet(
@@ -70,7 +67,7 @@ class ChildrenListScreen extends ConsumerWidget {
           isScrollControlled: true,
           builder: (_) => const AddChildBottomSheet(),
         ),
-        child: const Icon(Icons.add),
+        child: const Icon(LucideIcons.plus),
       ),
     );
   }
