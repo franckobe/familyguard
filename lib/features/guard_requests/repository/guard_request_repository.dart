@@ -52,8 +52,8 @@ class GuardRequestRepository {
 
   Future<void> create({
     required String parentId,
-    required String childId,
-    required ChildSnapshot childSnapshot,
+    required List<String> childIds,
+    required List<ChildSnapshot> childSnapshots,
     required GuardRequestType type,
     required DateTime startAt,
     required DateTime endAt,
@@ -66,8 +66,8 @@ class GuardRequestRepository {
     final now = FieldValue.serverTimestamp();
     final ref = await _db.collection('guard_requests').add({
       'parentId': parentId,
-      'childId': childId,
-      'childSnapshot': childSnapshot.toMap(),
+      'childIds': childIds,
+      'childSnapshots': childSnapshots.map((s) => s.toMap()).toList(),
       'type': type.name,
       'startAt': Timestamp.fromDate(startAt),
       'endAt': Timestamp.fromDate(endAt),

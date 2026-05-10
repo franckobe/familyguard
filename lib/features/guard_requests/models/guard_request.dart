@@ -42,8 +42,8 @@ class GuardRequest with _$GuardRequest {
   const factory GuardRequest({
     required String id,
     required String parentId,
-    required String childId,
-    required ChildSnapshot childSnapshot,
+    required List<String> childIds,
+    required List<ChildSnapshot> childSnapshots,
     required GuardRequestType type,
     required DateTime startAt,
     required DateTime endAt,
@@ -59,11 +59,22 @@ class GuardRequest with _$GuardRequest {
 
   factory GuardRequest.fromFirestore(DocumentSnapshot doc) {
     final d = doc.data()! as Map<String, dynamic>;
+
+    // Support both old (single child) and new (multi-child) documents
+    final List<String> childIds = d['childIds'] != null
+        ? List<String>.from(d['childIds'] as List)
+        : [d['childId'] as String];
+    final List<ChildSnapshot> childSnapshots = d['childSnapshots'] != null
+        ? (d['childSnapshots'] as List)
+            .map((m) => ChildSnapshot.fromMap(m as Map<String, dynamic>))
+            .toList()
+        : [ChildSnapshot.fromMap(d['childSnapshot'] as Map<String, dynamic>)];
+
     return GuardRequest(
       id: doc.id,
       parentId: d['parentId'] as String,
-      childId: d['childId'] as String,
-      childSnapshot: ChildSnapshot.fromMap(d['childSnapshot'] as Map<String, dynamic>),
+      childIds: childIds,
+      childSnapshots: childSnapshots,
       type: GuardRequestType.values.byName(d['type'] as String),
       startAt: (d['startAt'] as Timestamp).toDate(),
       endAt: (d['endAt'] as Timestamp).toDate(),
@@ -80,8 +91,8 @@ class GuardRequest with _$GuardRequest {
 
   Map<String, dynamic> toFirestore() => {
     'parentId': parentId,
-    'childId': childId,
-    'childSnapshot': childSnapshot.toMap(),
+    'childIds': childIds,
+    'childSnapshots': childSnapshots.map((s) => s.toMap()).toList(),
     'type': type.name,
     'startAt': Timestamp.fromDate(startAt),
     'endAt': Timestamp.fromDate(endAt),
@@ -94,6 +105,19 @@ class GuardRequest with _$GuardRequest {
     'createdAt': Timestamp.fromDate(createdAt),
     'updatedAt': Timestamp.fromDate(updatedAt),
   };
+
+  String get childNamesLabel =>
+      childSnapshots.map((s) => s.firstName).join(', ');
+
+  /// Computes guard type from duration between start and end.
+  static GuardRequestType typeFromDuration(DateTime start, DateTime end) {
+    final hours = end.difference(start).inHours;
+    if (hours <= 6) return GuardRequestType.hourly;
+    if (hours <= 12) return GuardRequestType.halfDay;
+    if (hours <= 30) return GuardRequestType.daily;
+    if (hours <= 72) return GuardRequestType.night;
+    return GuardRequestType.weekend;
+  }
 
   String get typeLabel => switch (type) {
     GuardRequestType.hourly  => 'Quelques heures',

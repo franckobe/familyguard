@@ -74,7 +74,7 @@ class GuardRequestDetailScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${req.childSnapshot.firstName} ${req.childSnapshot.lastName}'.trim(),
+                  req.childNamesLabel,
                   style: AppTextStyles.cardSubtitle,
                 ),
                 const SizedBox(height: 20),

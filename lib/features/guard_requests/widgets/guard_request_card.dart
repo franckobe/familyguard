@@ -24,8 +24,7 @@ class GuardRequestCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fmt = DateFormat('d MMM, HH:mm', 'fr');
-    final child = request.childSnapshot;
-    final childName = '${child.firstName} ${child.lastName}'.trim();
+    final childName = request.childNamesLabel;
     final route = isParent
         ? '/guard-requests/${request.id}'
         : '/guard-requests/${request.id}/incoming';

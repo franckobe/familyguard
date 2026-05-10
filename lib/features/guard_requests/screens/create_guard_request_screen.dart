@@ -30,8 +30,7 @@ class _CreateGuardRequestScreenState
   int _step = 0;
 
   // Step 1 state
-  Child? _selectedChild;
-  GuardRequestType _type = GuardRequestType.hourly;
+  final Set<String> _selectedChildIds = {};
   DateTime _startAt = DateTime.now().add(const Duration(hours: 1));
   DateTime _endAt = DateTime.now().add(const Duration(hours: 3));
   String _location = '';
@@ -46,6 +45,9 @@ class _CreateGuardRequestScreenState
 
   bool _loading = false;
 
+  GuardRequestType get _computedType =>
+      GuardRequest.typeFromDuration(_startAt, _endAt);
+
   Future<void> _pickDateTime({required bool isStart}) async {
     final now = DateTime.now();
     final date = await showDatePicker(
@@ -53,6 +55,7 @@ class _CreateGuardRequestScreenState
       initialDate: isStart ? _startAt : _endAt,
       firstDate: now,
       lastDate: now.add(const Duration(days: 365)),
+      locale: const Locale('fr'),
     );
     if (date == null || !mounted) return;
     final time = await showTimePicker(
@@ -78,6 +81,7 @@ class _CreateGuardRequestScreenState
       initialDate: now.add(const Duration(days: 1)),
       firstDate: now,
       lastDate: now.add(const Duration(days: 365)),
+      locale: const Locale('fr'),
     );
     if (date == null || !mounted) return;
     final startTime = await showTimePicker(
@@ -100,15 +104,30 @@ class _CreateGuardRequestScreenState
 
   Widget _buildStep1(List<Child> children) {
     final fmt = DateFormat('d MMM HH:mm', 'fr');
+    final typeLabel = switch (_computedType) {
+      GuardRequestType.hourly  => 'Quelques heures',
+      GuardRequestType.halfDay => 'Demi-journée',
+      GuardRequestType.daily   => 'Journée',
+      GuardRequestType.night   => 'Nuit',
+      GuardRequestType.weekend => 'Week-end',
+    };
+
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
       children: [
-        Text('Enfant', style: AppTextStyles.sectionLabel),
+        Text('Enfants', style: AppTextStyles.sectionLabel),
         const SizedBox(height: 8),
         ...children.map((c) {
-          final selected = _selectedChild?.id == c.id;
+          final selected = _selectedChildIds.contains(c.id);
+          final name = '${c.firstName} ${c.lastName}'.trim();
           return GestureDetector(
-            onTap: () => setState(() => _selectedChild = c),
+            onTap: () => setState(() {
+              if (selected) {
+                _selectedChildIds.remove(c.id);
+              } else {
+                _selectedChildIds.add(c.id);
+              }
+            }),
             child: Container(
               margin: const EdgeInsets.only(bottom: 8),
               padding: const EdgeInsets.all(12),
@@ -120,52 +139,51 @@ class _CreateGuardRequestScreenState
                   width: 0.5,
                 ),
               ),
-              child: Text(
-                '${c.firstName} ${c.lastName}'.trim(),
-                style: AppTextStyles.cardTitle,
+              child: Row(
+                children: [
+                  Icon(
+                    selected ? LucideIcons.checkCircle2 : LucideIcons.circle,
+                    size: 20,
+                    color: selected ? AppColors.primaryLight : AppColors.textTertiary,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(name, style: AppTextStyles.cardTitle),
+                ],
               ),
             ),
           );
         }),
         const SizedBox(height: 20),
-        Text('Type de garde', style: AppTextStyles.sectionLabel),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8, runSpacing: 8,
-          children: GuardRequestType.values.map((t) {
-            final selected = _type == t;
-            final label = switch (t) {
-              GuardRequestType.hourly  => 'Quelques heures',
-              GuardRequestType.halfDay => 'Demi-journée',
-              GuardRequestType.daily   => 'Journée',
-              GuardRequestType.night   => 'Nuit',
-              GuardRequestType.weekend => 'Week-end',
-            };
-            return GestureDetector(
-              onTap: () => setState(() => _type = t),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                decoration: BoxDecoration(
-                  color: selected ? AppColors.glassPurpleSurface : AppColors.glassSurface,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: selected ? AppColors.glassPurpleBorder : AppColors.glassBorder,
-                    width: 0.5,
-                  ),
-                ),
-                child: Text(label, style: AppTextStyles.cardTitle.copyWith(
-                  color: selected ? AppColors.badgeNewText : AppColors.textPrimary,
-                )),
-              ),
-            );
-          }).toList(),
-        ),
-        const SizedBox(height: 20),
         Text('Dates', style: AppTextStyles.sectionLabel),
         const SizedBox(height: 8),
-        _DateTile(label: 'Début', value: fmt.format(_startAt), onTap: () => _pickDateTime(isStart: true)),
+        _DateTile(
+          label: 'Début',
+          value: fmt.format(_startAt),
+          onTap: () => _pickDateTime(isStart: true),
+        ),
         const SizedBox(height: 8),
-        _DateTile(label: 'Fin', value: fmt.format(_endAt), onTap: () => _pickDateTime(isStart: false)),
+        _DateTile(
+          label: 'Fin',
+          value: fmt.format(_endAt),
+          onTap: () => _pickDateTime(isStart: false),
+        ),
+        if (_endAt.isAfter(_startAt)) ...[
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppColors.glassPurpleSurface,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                const Icon(LucideIcons.clock, size: 14, color: AppColors.badgeNewText),
+                const SizedBox(width: 8),
+                Text(typeLabel, style: AppTextStyles.cardSubtitle.copyWith(color: AppColors.badgeNewText)),
+              ],
+            ),
+          ),
+        ],
         const SizedBox(height: 20),
         Text('Récurrence', style: AppTextStyles.sectionLabel),
         const SizedBox(height: 8),
@@ -258,8 +276,83 @@ class _CreateGuardRequestScreenState
     );
   }
 
+  Widget _buildStep3() {
+    final connectionsAsync = ref.watch(connectionsAsParentProvider);
+    final activeConnections = connectionsAsync.valueOrNull
+            ?.where((c) => c.status == ConnectionStatus.active && c.caregiverId != null)
+            .toList() ??
+        [];
+
+    if (activeConnections.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(LucideIcons.users, size: 32, color: AppColors.textTertiary),
+            const SizedBox(height: 12),
+            Text('Aucun babysitter actif', style: AppTextStyles.cardTitle),
+            const SizedBox(height: 4),
+            Text('Invitez des proches dans Connexions.', style: AppTextStyles.cardSubtitle),
+          ],
+        ),
+      );
+    }
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+      children: [
+        Text('Envoyer à…', style: AppTextStyles.cardTitle),
+        const SizedBox(height: 4),
+        Text('Choisissez les babysitters à notifier.', style: AppTextStyles.cardSubtitle),
+        const SizedBox(height: 16),
+        ...activeConnections.map((c) {
+          final uid = c.caregiverId!;
+          final selected = _selectedRecipients.contains(uid);
+          final userAsync = ref.watch(userByIdProvider(uid));
+          final user = userAsync.valueOrNull;
+          final name = user != null
+              ? '${user.firstName} ${user.lastName}'.trim()
+              : c.inviteEmail;
+
+          return GestureDetector(
+            onTap: () => setState(() {
+              if (selected) {
+                _selectedRecipients.remove(uid);
+              } else {
+                _selectedRecipients.add(uid);
+              }
+            }),
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: selected ? AppColors.glassPurpleSurface : AppColors.glassSurface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: selected ? AppColors.glassPurpleBorder : AppColors.glassBorder,
+                  width: 0.5,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    selected ? LucideIcons.checkCircle2 : LucideIcons.circle,
+                    size: 20,
+                    color: selected ? AppColors.primaryLight : AppColors.textTertiary,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(name, style: AppTextStyles.cardTitle),
+                ],
+              ),
+            ),
+          );
+        }),
+      ],
+    );
+  }
+
   bool get _canProceedStep1 =>
-      _selectedChild != null && _endAt.isAfter(_startAt);
+      _selectedChildIds.isNotEmpty && _endAt.isAfter(_startAt);
 
   @override
   Widget build(BuildContext context) {
@@ -338,7 +431,7 @@ class _CreateGuardRequestScreenState
   Widget _buildCurrentStep(List<Child> children) {
     if (_step == 0) return _buildStep1(children);
     if (_recurrenceType == RecurrenceType.custom && _step == 1) return _buildStep2();
-    return _buildStep3(); // implemented in Task 8
+    return _buildStep3();
   }
 
   bool _canProceed() {
@@ -357,81 +450,6 @@ class _CreateGuardRequestScreenState
     }
   }
 
-  Widget _buildStep3() {
-    final connectionsAsync = ref.watch(connectionsAsParentProvider);
-    final activeConnections = connectionsAsync.valueOrNull
-            ?.where((c) => c.status == ConnectionStatus.active && c.caregiverId != null)
-            .toList() ??
-        [];
-
-    if (activeConnections.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(LucideIcons.users, size: 32, color: AppColors.textTertiary),
-            const SizedBox(height: 12),
-            Text('Aucun babysitter actif', style: AppTextStyles.cardTitle),
-            const SizedBox(height: 4),
-            Text('Invitez des proches dans Connexions.', style: AppTextStyles.cardSubtitle),
-          ],
-        ),
-      );
-    }
-
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-      children: [
-        Text('Envoyer à…', style: AppTextStyles.cardTitle),
-        const SizedBox(height: 4),
-        Text('Choisissez les babysitters à notifier.', style: AppTextStyles.cardSubtitle),
-        const SizedBox(height: 16),
-        ...activeConnections.map((c) {
-          final uid = c.caregiverId!;
-          final selected = _selectedRecipients.contains(uid);
-          final userAsync = ref.watch(userByIdProvider(uid));
-          final user = userAsync.valueOrNull;
-          final name = user != null
-              ? '${user.firstName} ${user.lastName}'.trim()
-              : c.inviteEmail;
-
-          return GestureDetector(
-            onTap: () => setState(() {
-              if (selected) {
-                _selectedRecipients.remove(uid);
-              } else {
-                _selectedRecipients.add(uid);
-              }
-            }),
-            child: Container(
-              margin: const EdgeInsets.only(bottom: 8),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: selected ? AppColors.glassPurpleSurface : AppColors.glassSurface,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: selected ? AppColors.glassPurpleBorder : AppColors.glassBorder,
-                  width: 0.5,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    selected ? LucideIcons.checkCircle2 : LucideIcons.circle,
-                    size: 20,
-                    color: selected ? AppColors.primaryLight : AppColors.textTertiary,
-                  ),
-                  const SizedBox(width: 12),
-                  Text(name, style: AppTextStyles.cardTitle),
-                ],
-              ),
-            ),
-          );
-        }),
-      ],
-    );
-  }
-
   Future<void> _submit() async {
     if (_selectedRecipients.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -442,13 +460,19 @@ class _CreateGuardRequestScreenState
     setState(() => _loading = true);
     try {
       final uid = FirebaseAuth.instance.currentUser!.uid;
-      final child = _selectedChild!;
-      final snapshot = ChildSnapshot(
-        firstName: child.firstName,
-        lastName: child.lastName,
-        avatarUrl: child.avatarUrl,
-        birthDate: child.birthDate,
-      );
+      final childrenAll = ref.read(childrenProvider).valueOrNull ?? [];
+      final selectedChildren = childrenAll
+          .where((c) => _selectedChildIds.contains(c.id))
+          .toList();
+
+      final childIds = selectedChildren.map((c) => c.id).toList();
+      final childSnapshots = selectedChildren.map((c) => ChildSnapshot(
+        firstName: c.firstName,
+        lastName: c.lastName,
+        avatarUrl: c.avatarUrl,
+        birthDate: c.birthDate,
+      )).toList();
+
       final occurrences = _occurrences.map((o) => {
         'startAt': Timestamp.fromDate(o.$1),
         'endAt': Timestamp.fromDate(o.$2),
@@ -457,9 +481,9 @@ class _CreateGuardRequestScreenState
 
       await ref.read(guardRequestRepositoryProvider).create(
         parentId: uid,
-        childId: child.id,
-        childSnapshot: snapshot,
-        type: _type,
+        childIds: childIds,
+        childSnapshots: childSnapshots,
+        type: _computedType,
         startAt: _startAt,
         endAt: _endAt,
         location: _location.trim().isEmpty ? null : _location.trim(),

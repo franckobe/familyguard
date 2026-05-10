@@ -19,8 +19,8 @@ final _privateConstructorUsedError = UnsupportedError(
 mixin _$GuardRequest {
   String get id => throw _privateConstructorUsedError;
   String get parentId => throw _privateConstructorUsedError;
-  String get childId => throw _privateConstructorUsedError;
-  ChildSnapshot get childSnapshot => throw _privateConstructorUsedError;
+  List<String> get childIds => throw _privateConstructorUsedError;
+  List<ChildSnapshot> get childSnapshots => throw _privateConstructorUsedError;
   GuardRequestType get type => throw _privateConstructorUsedError;
   DateTime get startAt => throw _privateConstructorUsedError;
   DateTime get endAt => throw _privateConstructorUsedError;
@@ -50,8 +50,8 @@ abstract class $GuardRequestCopyWith<$Res> {
   $Res call({
     String id,
     String parentId,
-    String childId,
-    ChildSnapshot childSnapshot,
+    List<String> childIds,
+    List<ChildSnapshot> childSnapshots,
     GuardRequestType type,
     DateTime startAt,
     DateTime endAt,
@@ -83,8 +83,8 @@ class _$GuardRequestCopyWithImpl<$Res, $Val extends GuardRequest>
   $Res call({
     Object? id = null,
     Object? parentId = null,
-    Object? childId = null,
-    Object? childSnapshot = null,
+    Object? childIds = null,
+    Object? childSnapshots = null,
     Object? type = null,
     Object? startAt = null,
     Object? endAt = null,
@@ -109,16 +109,16 @@ class _$GuardRequestCopyWithImpl<$Res, $Val extends GuardRequest>
                     ? _value.parentId
                     : parentId // ignore: cast_nullable_to_non_nullable
                         as String,
-            childId:
-                null == childId
-                    ? _value.childId
-                    : childId // ignore: cast_nullable_to_non_nullable
-                        as String,
-            childSnapshot:
-                null == childSnapshot
-                    ? _value.childSnapshot
-                    : childSnapshot // ignore: cast_nullable_to_non_nullable
-                        as ChildSnapshot,
+            childIds:
+                null == childIds
+                    ? _value.childIds
+                    : childIds // ignore: cast_nullable_to_non_nullable
+                        as List<String>,
+            childSnapshots:
+                null == childSnapshots
+                    ? _value.childSnapshots
+                    : childSnapshots // ignore: cast_nullable_to_non_nullable
+                        as List<ChildSnapshot>,
             type:
                 null == type
                     ? _value.type
@@ -192,8 +192,8 @@ abstract class _$$GuardRequestImplCopyWith<$Res>
   $Res call({
     String id,
     String parentId,
-    String childId,
-    ChildSnapshot childSnapshot,
+    List<String> childIds,
+    List<ChildSnapshot> childSnapshots,
     GuardRequestType type,
     DateTime startAt,
     DateTime endAt,
@@ -224,8 +224,8 @@ class __$$GuardRequestImplCopyWithImpl<$Res>
   $Res call({
     Object? id = null,
     Object? parentId = null,
-    Object? childId = null,
-    Object? childSnapshot = null,
+    Object? childIds = null,
+    Object? childSnapshots = null,
     Object? type = null,
     Object? startAt = null,
     Object? endAt = null,
@@ -250,16 +250,16 @@ class __$$GuardRequestImplCopyWithImpl<$Res>
                 ? _value.parentId
                 : parentId // ignore: cast_nullable_to_non_nullable
                     as String,
-        childId:
-            null == childId
-                ? _value.childId
-                : childId // ignore: cast_nullable_to_non_nullable
-                    as String,
-        childSnapshot:
-            null == childSnapshot
-                ? _value.childSnapshot
-                : childSnapshot // ignore: cast_nullable_to_non_nullable
-                    as ChildSnapshot,
+        childIds:
+            null == childIds
+                ? _value._childIds
+                : childIds // ignore: cast_nullable_to_non_nullable
+                    as List<String>,
+        childSnapshots:
+            null == childSnapshots
+                ? _value._childSnapshots
+                : childSnapshots // ignore: cast_nullable_to_non_nullable
+                    as List<ChildSnapshot>,
         type:
             null == type
                 ? _value.type
@@ -326,8 +326,8 @@ class _$GuardRequestImpl extends _GuardRequest {
   const _$GuardRequestImpl({
     required this.id,
     required this.parentId,
-    required this.childId,
-    required this.childSnapshot,
+    required final List<String> childIds,
+    required final List<ChildSnapshot> childSnapshots,
     required this.type,
     required this.startAt,
     required this.endAt,
@@ -339,17 +339,31 @@ class _$GuardRequestImpl extends _GuardRequest {
     this.confirmedId,
     required this.createdAt,
     required this.updatedAt,
-  }) : _recipientIds = recipientIds,
+  }) : _childIds = childIds,
+       _childSnapshots = childSnapshots,
+       _recipientIds = recipientIds,
        super._();
 
   @override
   final String id;
   @override
   final String parentId;
+  final List<String> _childIds;
   @override
-  final String childId;
+  List<String> get childIds {
+    if (_childIds is EqualUnmodifiableListView) return _childIds;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_childIds);
+  }
+
+  final List<ChildSnapshot> _childSnapshots;
   @override
-  final ChildSnapshot childSnapshot;
+  List<ChildSnapshot> get childSnapshots {
+    if (_childSnapshots is EqualUnmodifiableListView) return _childSnapshots;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_childSnapshots);
+  }
+
   @override
   final GuardRequestType type;
   @override
@@ -381,7 +395,7 @@ class _$GuardRequestImpl extends _GuardRequest {
 
   @override
   String toString() {
-    return 'GuardRequest(id: $id, parentId: $parentId, childId: $childId, childSnapshot: $childSnapshot, type: $type, startAt: $startAt, endAt: $endAt, location: $location, notes: $notes, status: $status, recurrenceType: $recurrenceType, recipientIds: $recipientIds, confirmedId: $confirmedId, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'GuardRequest(id: $id, parentId: $parentId, childIds: $childIds, childSnapshots: $childSnapshots, type: $type, startAt: $startAt, endAt: $endAt, location: $location, notes: $notes, status: $status, recurrenceType: $recurrenceType, recipientIds: $recipientIds, confirmedId: $confirmedId, createdAt: $createdAt, updatedAt: $updatedAt)';
   }
 
   @override
@@ -392,9 +406,11 @@ class _$GuardRequestImpl extends _GuardRequest {
             (identical(other.id, id) || other.id == id) &&
             (identical(other.parentId, parentId) ||
                 other.parentId == parentId) &&
-            (identical(other.childId, childId) || other.childId == childId) &&
-            (identical(other.childSnapshot, childSnapshot) ||
-                other.childSnapshot == childSnapshot) &&
+            const DeepCollectionEquality().equals(other._childIds, _childIds) &&
+            const DeepCollectionEquality().equals(
+              other._childSnapshots,
+              _childSnapshots,
+            ) &&
             (identical(other.type, type) || other.type == type) &&
             (identical(other.startAt, startAt) || other.startAt == startAt) &&
             (identical(other.endAt, endAt) || other.endAt == endAt) &&
@@ -421,8 +437,8 @@ class _$GuardRequestImpl extends _GuardRequest {
     runtimeType,
     id,
     parentId,
-    childId,
-    childSnapshot,
+    const DeepCollectionEquality().hash(_childIds),
+    const DeepCollectionEquality().hash(_childSnapshots),
     type,
     startAt,
     endAt,
@@ -449,8 +465,8 @@ abstract class _GuardRequest extends GuardRequest {
   const factory _GuardRequest({
     required final String id,
     required final String parentId,
-    required final String childId,
-    required final ChildSnapshot childSnapshot,
+    required final List<String> childIds,
+    required final List<ChildSnapshot> childSnapshots,
     required final GuardRequestType type,
     required final DateTime startAt,
     required final DateTime endAt,
@@ -470,9 +486,9 @@ abstract class _GuardRequest extends GuardRequest {
   @override
   String get parentId;
   @override
-  String get childId;
+  List<String> get childIds;
   @override
-  ChildSnapshot get childSnapshot;
+  List<ChildSnapshot> get childSnapshots;
   @override
   GuardRequestType get type;
   @override

@@ -14,7 +14,7 @@ export const onGuardRequestCreated = onDocumentCreated(
 
     const parentDoc = await db.collection('users').doc(data.parentId).get();
     const parentName = (parentDoc.data()?.firstName as string) || 'Un parent';
-    const childName = (data.childSnapshot?.firstName as string) || 'votre enfant';
+    const childName = (data.childSnapshots?.[0]?.firstName as string) || 'votre enfant';
     const typeLabel = data.type as string;
 
     for (const uid of recipientIds) {
