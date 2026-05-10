@@ -25,17 +25,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   final _lastNameController = TextEditingController();
   final _phoneController = TextEditingController();
   bool _loading = false;
+  bool _initialized = false;
   Uint8List? _pickedImageBytes;
 
   @override
   void initState() {
     super.initState();
-    final user = ref.read(currentUserProvider).valueOrNull;
-    if (user != null) {
-      _firstNameController.text = user.firstName;
-      _lastNameController.text = user.lastName;
-      _phoneController.text = user.phone ?? '';
-    }
   }
 
   @override
@@ -102,6 +97,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(currentUserProvider).valueOrNull;
+    if (user != null && !_initialized) {
+      _initialized = true;
+      _firstNameController.text = user.firstName;
+      _lastNameController.text = user.lastName;
+      _phoneController.text = user.phone ?? '';
+    }
     final initials = user != null
         ? '${user.firstName.isNotEmpty ? user.firstName[0] : ''}${user.lastName.isNotEmpty ? user.lastName[0] : ''}'
         : '?';
