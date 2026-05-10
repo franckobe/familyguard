@@ -52,10 +52,16 @@ class _CreateGuardRequestScreenState
 
   String? get _resolvedLocation {
     if (_locationPreset == null) return null;
-    if (_locationPreset == 'chez_vous') return 'Chez vous';
-    if (_locationPreset == 'chez_nous') return 'Chez nous';
+    if (_locationPreset == 'chez_moi') return 'Chez moi';
+    if (_locationPreset == 'chez_babysitter') return 'Chez le babysitter';
     final t = _locationCustom.trim();
     return t.isEmpty ? null : t;
+  }
+
+  static TimeOfDay _roundToQuarter(TimeOfDay t) {
+    final total = t.hour * 60 + t.minute;
+    final rounded = ((total / 15).round() * 15) % (24 * 60);
+    return TimeOfDay(hour: rounded ~/ 60, minute: rounded % 60);
   }
 
   Future<void> _pickDateTime({required bool isStart}) async {
@@ -73,7 +79,8 @@ class _CreateGuardRequestScreenState
       initialTime: TimeOfDay.fromDateTime(isStart ? _startAt : _endAt),
     );
     if (time == null || !mounted) return;
-    final result = DateTime(date.year, date.month, date.day, time.hour, time.minute);
+    final q = _roundToQuarter(time);
+    final result = DateTime(date.year, date.month, date.day, q.hour, q.minute);
     setState(() {
       if (isStart) {
         _startAt = result;
@@ -104,10 +111,12 @@ class _CreateGuardRequestScreenState
       initialTime: const TimeOfDay(hour: 17, minute: 0),
     );
     if (endTime == null || !mounted) return;
+    final qs = _roundToQuarter(startTime);
+    final qe = _roundToQuarter(endTime);
     setState(() {
       _occurrences.add((
-        DateTime(date.year, date.month, date.day, startTime.hour, startTime.minute),
-        DateTime(date.year, date.month, date.day, endTime.hour, endTime.minute),
+        DateTime(date.year, date.month, date.day, qs.hour, qs.minute),
+        DateTime(date.year, date.month, date.day, qe.hour, qe.minute),
       ));
     });
   }
@@ -537,8 +546,8 @@ class _LocationPicker extends StatelessWidget {
   final void Function(String) onCustomText;
 
   static const _options = [
-    ('chez_vous', 'Chez vous'),
-    ('chez_nous', 'Chez nous'),
+    ('chez_moi', 'Chez moi'),
+    ('chez_babysitter', 'Chez le babysitter'),
     ('autre', 'Autre'),
   ];
 
@@ -547,29 +556,28 @@ class _LocationPicker extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
           children: _options.map((opt) {
             final (value, label) = opt;
             final isSelected = selected == value;
-            return Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: GestureDetector(
-                onTap: () => onPreset(isSelected ? null : value),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: isSelected ? AppColors.glassPurpleSurface : AppColors.glassSurface,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: isSelected ? AppColors.glassPurpleBorder : AppColors.glassBorder,
-                      width: 0.5,
-                    ),
+            return GestureDetector(
+              onTap: () => onPreset(isSelected ? null : value),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  color: isSelected ? AppColors.glassPurpleSurface : AppColors.glassSurface,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isSelected ? AppColors.glassPurpleBorder : AppColors.glassBorder,
+                    width: 0.5,
                   ),
-                  child: Text(
-                    label,
-                    style: AppTextStyles.cardTitle.copyWith(
-                      color: isSelected ? AppColors.badgeNewText : AppColors.textPrimary,
-                    ),
+                ),
+                child: Text(
+                  label,
+                  style: AppTextStyles.cardTitle.copyWith(
+                    color: isSelected ? AppColors.badgeNewText : AppColors.textPrimary,
                   ),
                 ),
               ),
@@ -579,6 +587,7 @@ class _LocationPicker extends StatelessWidget {
         if (selected == 'autre') ...[
           const SizedBox(height: 12),
           TextField(
+            autofocus: true,
             style: const TextStyle(color: AppColors.textPrimary),
             decoration: const InputDecoration(labelText: 'Précisez le lieu'),
             onChanged: onCustomText,
