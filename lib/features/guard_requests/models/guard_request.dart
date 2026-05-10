@@ -115,12 +115,9 @@ class GuardRequest with _$GuardRequest {
     // Weekend: Fri evening → Sun evening and similar multi-day spans
     if (hours > 36) return GuardRequestType.weekend;
 
-    // Night: starts afternoon/evening (≥15h), ends next morning (<11h),
-    // and lasts ≥8h to avoid false positives on short cross-midnight spans
-    if (hours >= 8 &&
-        end.day != start.day &&
-        start.hour >= 15 &&
-        end.hour < 11) {
+    // Night: starts afternoon/evening (≥14h) and crosses midnight — no end-hour
+    // constraint since drop-off can be early afternoon the following day
+    if (hours >= 6 && end.day != start.day && start.hour >= 14) {
       return GuardRequestType.night;
     }
 
@@ -153,4 +150,10 @@ class GuardRequest with _$GuardRequest {
     }
     return _staticLabel(type);
   }
+
+  String? get locationLabel => switch (location) {
+    'parent_house'    => 'Chez le parent',
+    'caregiver_house' => 'Chez le babysitter',
+    _                 => location,
+  };
 }

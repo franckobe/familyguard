@@ -118,9 +118,9 @@ class _IncomingRequestDetailScreenState
                       _InfoRow(icon: LucideIcons.calendar, label: 'Début', value: fmt.format(req.startAt)),
                       const SizedBox(height: 12),
                       _InfoRow(icon: LucideIcons.calendarOff, label: 'Fin', value: fmt.format(req.endAt)),
-                      if (req.location != null) ...[
+                      if (req.locationLabel != null) ...[
                         const SizedBox(height: 12),
-                        _InfoRow(icon: LucideIcons.mapPin, label: 'Lieu', value: req.location!),
+                        _InfoRow(icon: LucideIcons.mapPin, label: 'Lieu', value: req.locationLabel!),
                       ],
                       if (req.notes != null) ...[
                         const SizedBox(height: 12),
