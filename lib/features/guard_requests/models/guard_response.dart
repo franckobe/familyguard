@@ -51,4 +51,12 @@ class GuardResponse with _$GuardResponse {
       respondedAt: (d['respondedAt'] as Timestamp).toDate(),
     );
   }
+
+  Map<String, dynamic> toFirestore() => {
+    'caregiverId': caregiverId,
+    'caregiverSnapshot': caregiverSnapshot.toMap(),
+    'status': status.name,
+    'message': message,
+    'respondedAt': Timestamp.fromDate(respondedAt),
+  };
 }

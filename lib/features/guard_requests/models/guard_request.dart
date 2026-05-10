@@ -78,6 +78,23 @@ class GuardRequest with _$GuardRequest {
     );
   }
 
+  Map<String, dynamic> toFirestore() => {
+    'parentId': parentId,
+    'childId': childId,
+    'childSnapshot': childSnapshot.toMap(),
+    'type': type.name,
+    'startAt': Timestamp.fromDate(startAt),
+    'endAt': Timestamp.fromDate(endAt),
+    'location': location,
+    'notes': notes,
+    'status': status.name,
+    'recurrenceType': recurrenceType.name,
+    'recipientIds': recipientIds,
+    'confirmedId': confirmedId,
+    'createdAt': Timestamp.fromDate(createdAt),
+    'updatedAt': Timestamp.fromDate(updatedAt),
+  };
+
   String get typeLabel => switch (type) {
     GuardRequestType.hourly  => 'Quelques heures',
     GuardRequestType.halfDay => 'Demi-journée',
