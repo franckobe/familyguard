@@ -1,7 +1,10 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/glass_app_bar.dart';
 import '../../../core/widgets/app_background.dart';
@@ -78,10 +81,25 @@ class ConnectionDetailScreen extends ConsumerWidget {
       );
     }
 
-    final uid = ref.watch(authStateProvider).valueOrNull?.uid;
-    final isParent = connection.parentId == uid;
-    final label = connection.inviteEmail;
-    final initials = label.isNotEmpty ? label[0].toUpperCase() : '?';
+    final myUid = FirebaseAuth.instance.currentUser?.uid;
+    final isParent = connection.parentId == myUid;
+    final otherUid = isParent ? connection.caregiverId : connection.parentId;
+    final otherUserAsync = otherUid != null ? ref.watch(userByIdProvider(otherUid)) : null;
+    final otherUser = otherUserAsync?.valueOrNull;
+
+    final fullName = '${otherUser?.firstName ?? ''} ${otherUser?.lastName ?? ''}'.trim();
+    final label = fullName.isNotEmpty ? fullName : connection.inviteEmail;
+    final initials = fullName.isNotEmpty
+        ? '${otherUser!.firstName.isNotEmpty ? otherUser.firstName[0] : ''}${otherUser.lastName.isNotEmpty ? otherUser.lastName[0] : ''}'.toUpperCase()
+        : connection.inviteEmail.isNotEmpty ? connection.inviteEmail[0].toUpperCase() : '?';
+
+    final fmt = DateFormat('d MMMM yyyy', 'fr');
+    final dateLabel = switch (connection.status) {
+      ConnectionStatus.active   => 'Connecté depuis le ${fmt.format(connection.updatedAt)}',
+      ConnectionStatus.pending  => 'Invité le ${fmt.format(connection.createdAt)}',
+      ConnectionStatus.declined => 'Refusé le ${fmt.format(connection.updatedAt)}',
+      ConnectionStatus.blocked  => 'Bloqué le ${fmt.format(connection.updatedAt)}',
+    };
 
     final badgeStatus = switch (connection.status) {
       ConnectionStatus.pending  => BadgeStatus.waiting,
@@ -101,23 +119,51 @@ class ConnectionDetailScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                const SizedBox(height: 8),
-                AvatarInitials(initials: initials, size: 96),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
+                otherUser?.avatarUrl != null
+                    ? CircleAvatar(
+                        radius: 56,
+                        backgroundImage: NetworkImage(otherUser!.avatarUrl!),
+                      )
+                    : AvatarInitials(initials: initials, size: 112),
+                const SizedBox(height: 16),
                 Text(label, style: AppTextStyles.screenTitle, textAlign: TextAlign.center),
-                const SizedBox(height: 8),
+                const SizedBox(height: 4),
+                Text(dateLabel, style: AppTextStyles.cardSubtitle, textAlign: TextAlign.center),
+                const SizedBox(height: 12),
                 StatusBadge(status: badgeStatus),
-                const SizedBox(height: 24),
+                const SizedBox(height: 28),
                 GlassCard(
+                  padding: const EdgeInsets.all(20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('DÉTAILS', style: AppTextStyles.sectionLabel),
-                      const SizedBox(height: 8),
-                      _InfoRow('Rôle', isParent ? 'Votre babysitter' : 'Votre famille'),
-                      if (connection.message != null) ...[
-                        const SizedBox(height: 8),
-                        _InfoRow('Message', connection.message!),
+                      _InfoRow(
+                        icon: LucideIcons.users,
+                        label: 'Rôle',
+                        value: isParent ? 'Votre babysitter' : 'Votre famille',
+                      ),
+                      const SizedBox(height: 16),
+                      _InfoRow(
+                        icon: LucideIcons.mail,
+                        label: 'Email',
+                        value: connection.inviteEmail,
+                      ),
+                      if (otherUser?.phone != null) ...[
+                        const SizedBox(height: 16),
+                        _InfoRow(
+                          icon: LucideIcons.phone,
+                          label: 'Téléphone',
+                          value: otherUser!.phone!,
+                        ),
+                      ],
+                      if (connection.message != null && connection.message!.isNotEmpty) ...[
+                        const SizedBox(height: 16),
+                        _InfoRow(
+                          icon: LucideIcons.messageSquare,
+                          label: 'Message',
+                          value: connection.message!,
+                        ),
                       ],
                     ],
                   ),
@@ -154,18 +200,28 @@ class ConnectionDetailScreen extends ConsumerWidget {
 }
 
 class _InfoRow extends StatelessWidget {
-  const _InfoRow(this.label, this.value);
+  const _InfoRow({required this.icon, required this.label, required this.value});
+  final IconData icon;
   final String label;
   final String value;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label.toUpperCase(), style: AppTextStyles.sectionLabel),
-        const SizedBox(height: 4),
-        Text(value, style: AppTextStyles.cardTitle),
+        Icon(icon, size: 18, color: AppColors.textTertiary),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label.toUpperCase(), style: AppTextStyles.sectionLabel),
+              const SizedBox(height: 2),
+              Text(value, style: AppTextStyles.cardTitle),
+            ],
+          ),
+        ),
       ],
     );
   }
