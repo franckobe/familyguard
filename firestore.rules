@@ -32,5 +32,34 @@ service cloud.firestore {
         (request.auth.uid == resource.data.parentId ||
          request.auth.uid == resource.data.caregiverId);
     }
+
+    match /guard_requests/{requestId} {
+      allow read: if isAuth() &&
+        (request.auth.uid == resource.data.parentId ||
+         request.auth.uid in resource.data.recipientIds);
+      allow create: if isAuth() &&
+        isOwner(request.resource.data.parentId);
+      allow update: if isAuth() &&
+        isOwner(resource.data.parentId);
+
+      match /occurrences/{occurrenceId} {
+        allow read, write: if isAuth() &&
+          isOwner(get(/databases/$(database)/documents/guard_requests/$(requestId)).data.parentId);
+      }
+
+      match /responses/{caregiverId} {
+        allow read: if isAuth() &&
+          (request.auth.uid == get(/databases/$(database)/documents/guard_requests/$(requestId)).data.parentId ||
+           request.auth.uid == caregiverId);
+        allow create, update: if isAuth() && isOwner(caregiverId);
+      }
+
+      match /recipients/{caregiverId} {
+        allow read: if isAuth() &&
+          (request.auth.uid == get(/databases/$(database)/documents/guard_requests/$(requestId)).data.parentId ||
+           request.auth.uid == caregiverId);
+        allow write: if false;
+      }
+    }
   }
 }
