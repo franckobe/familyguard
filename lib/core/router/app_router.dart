@@ -15,7 +15,11 @@ import '../../features/connections/screens/connections_list_screen.dart';
 import '../../features/connections/screens/invite_screen.dart';
 import '../../features/connections/screens/connection_detail_screen.dart';
 import '../../features/connections/screens/invitation_received_screen.dart';
-import '../../features/guard_requests/screens/guard_requests_placeholder_screen.dart';
+import '../../features/guard_requests/models/guard_request.dart';
+import '../../features/guard_requests/screens/guard_requests_list_screen.dart';
+import '../../features/guard_requests/screens/create_guard_request_screen.dart';
+import '../../features/guard_requests/screens/guard_request_detail_screen.dart';
+import '../../features/guard_requests/screens/incoming_request_detail_screen.dart';
 import 'app_shell.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -86,7 +90,27 @@ final routerProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(routes: [
             GoRoute(
               path: '/guard-requests',
-              builder: (_, __) => const GuardRequestsPlaceholderScreen(),
+              builder: (_, __) => const GuardRequestsListScreen(),
+              routes: [
+                GoRoute(
+                  path: 'create',
+                  builder: (_, __) => const CreateGuardRequestScreen(),
+                ),
+                GoRoute(
+                  path: ':id',
+                  builder: (_, s) => GuardRequestDetailScreen(
+                    requestId: s.pathParameters['id']!,
+                    request: s.extra as GuardRequest?,
+                  ),
+                ),
+                GoRoute(
+                  path: ':id/incoming',
+                  builder: (_, s) => IncomingRequestDetailScreen(
+                    requestId: s.pathParameters['id']!,
+                    request: s.extra as GuardRequest?,
+                  ),
+                ),
+              ],
             ),
           ]),
         ],
