@@ -1,14 +1,21 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/glass_app_bar.dart';
 import '../../../core/widgets/app_background.dart';
+import '../../auth/providers/auth_providers.dart';
 import '../../children/models/child.dart';
 import '../../children/providers/children_providers.dart';
+import '../../connections/models/connection.dart';
+import '../../connections/providers/connection_providers.dart';
 import '../models/guard_request.dart';
+import '../providers/guard_request_providers.dart';
 
 class CreateGuardRequestScreen extends ConsumerStatefulWidget {
   const CreateGuardRequestScreen({super.key});
@@ -27,18 +34,16 @@ class _CreateGuardRequestScreenState
   GuardRequestType _type = GuardRequestType.hourly;
   DateTime _startAt = DateTime.now().add(const Duration(hours: 1));
   DateTime _endAt = DateTime.now().add(const Duration(hours: 3));
-  // ignore: unused_field — used in Task 8 _submit()
   String _location = '';
-  // ignore: unused_field — used in Task 8 _submit()
   String _notes = '';
   RecurrenceType _recurrenceType = RecurrenceType.none;
 
   // Step 2 state
   final List<(DateTime start, DateTime end)> _occurrences = [];
 
-  // Step 3 state — handled in Task 8
+  // Step 3 state
+  final Set<String> _selectedRecipients = {};
 
-  // ignore: prefer_final_fields — mutated in Task 8 _submit()
   bool _loading = false;
 
   Future<void> _pickDateTime({required bool isStart}) async {
@@ -253,8 +258,6 @@ class _CreateGuardRequestScreenState
     );
   }
 
-  // Step 3 will be added in Task 8
-
   bool get _canProceedStep1 =>
       _selectedChild != null && _endAt.isAfter(_startAt);
 
@@ -340,6 +343,8 @@ class _CreateGuardRequestScreenState
 
   bool _canProceed() {
     if (_step == 0) return _canProceedStep1;
+    final totalSteps = _recurrenceType == RecurrenceType.custom ? 3 : 2;
+    if (_step == totalSteps - 1) return _selectedRecipients.isNotEmpty;
     return true;
   }
 
@@ -352,9 +357,132 @@ class _CreateGuardRequestScreenState
     }
   }
 
-  // _buildStep3 and _submit implemented in Task 8
-  Widget _buildStep3() => const Center(child: CircularProgressIndicator());
-  Future<void> _submit() async {}
+  Widget _buildStep3() {
+    final connectionsAsync = ref.watch(connectionsAsParentProvider);
+    final activeConnections = connectionsAsync.valueOrNull
+            ?.where((c) => c.status == ConnectionStatus.active && c.caregiverId != null)
+            .toList() ??
+        [];
+
+    if (activeConnections.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(LucideIcons.users, size: 32, color: AppColors.textTertiary),
+            const SizedBox(height: 12),
+            Text('Aucun babysitter actif', style: AppTextStyles.cardTitle),
+            const SizedBox(height: 4),
+            Text('Invitez des proches dans Connexions.', style: AppTextStyles.cardSubtitle),
+          ],
+        ),
+      );
+    }
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+      children: [
+        Text('Envoyer à…', style: AppTextStyles.cardTitle),
+        const SizedBox(height: 4),
+        Text('Choisissez les babysitters à notifier.', style: AppTextStyles.cardSubtitle),
+        const SizedBox(height: 16),
+        ...activeConnections.map((c) {
+          final uid = c.caregiverId!;
+          final selected = _selectedRecipients.contains(uid);
+          final userAsync = ref.watch(userByIdProvider(uid));
+          final user = userAsync.valueOrNull;
+          final name = user != null
+              ? '${user.firstName} ${user.lastName}'.trim()
+              : c.inviteEmail;
+
+          return GestureDetector(
+            onTap: () => setState(() {
+              if (selected) {
+                _selectedRecipients.remove(uid);
+              } else {
+                _selectedRecipients.add(uid);
+              }
+            }),
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: selected ? AppColors.glassPurpleSurface : AppColors.glassSurface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: selected ? AppColors.glassPurpleBorder : AppColors.glassBorder,
+                  width: 0.5,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    selected ? LucideIcons.checkCircle2 : LucideIcons.circle,
+                    size: 20,
+                    color: selected ? AppColors.primaryLight : AppColors.textTertiary,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(name, style: AppTextStyles.cardTitle),
+                ],
+              ),
+            ),
+          );
+        }),
+      ],
+    );
+  }
+
+  Future<void> _submit() async {
+    if (_selectedRecipients.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Sélectionnez au moins un destinataire.')),
+      );
+      return;
+    }
+    setState(() => _loading = true);
+    try {
+      final uid = FirebaseAuth.instance.currentUser!.uid;
+      final child = _selectedChild!;
+      final snapshot = ChildSnapshot(
+        firstName: child.firstName,
+        lastName: child.lastName,
+        avatarUrl: child.avatarUrl,
+        birthDate: child.birthDate,
+      );
+      final occurrences = _occurrences.map((o) => {
+        'startAt': Timestamp.fromDate(o.$1),
+        'endAt': Timestamp.fromDate(o.$2),
+        'notes': null,
+      }).toList();
+
+      await ref.read(guardRequestRepositoryProvider).create(
+        parentId: uid,
+        childId: child.id,
+        childSnapshot: snapshot,
+        type: _type,
+        startAt: _startAt,
+        endAt: _endAt,
+        location: _location.trim().isEmpty ? null : _location.trim(),
+        notes: _notes.trim().isEmpty ? null : _notes.trim(),
+        recurrenceType: _recurrenceType,
+        recipientIds: _selectedRecipients.toList(),
+        occurrences: occurrences,
+      );
+
+      if (!mounted) return;
+      context.pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Demande envoyée !')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur : $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
 }
 
 class _DateTile extends StatelessWidget {
