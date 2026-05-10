@@ -109,14 +109,24 @@ class GuardRequest with _$GuardRequest {
   String get childNamesLabel =>
       childSnapshots.map((s) => s.firstName).join(', ');
 
-  /// Computes guard type from duration between start and end.
   static GuardRequestType typeFromDuration(DateTime start, DateTime end) {
     final hours = end.difference(start).inHours;
+
+    // Weekend: Fri evening → Sun evening and similar multi-day spans
+    if (hours > 36) return GuardRequestType.weekend;
+
+    // Night: starts afternoon/evening (≥15h), ends next morning (<11h),
+    // and lasts ≥8h to avoid false positives on short cross-midnight spans
+    if (hours >= 8 &&
+        end.day != start.day &&
+        start.hour >= 15 &&
+        end.hour < 11) {
+      return GuardRequestType.night;
+    }
+
     if (hours <= 6) return GuardRequestType.hourly;
     if (hours <= 12) return GuardRequestType.halfDay;
-    if (hours <= 30) return GuardRequestType.daily;
-    if (hours <= 72) return GuardRequestType.night;
-    return GuardRequestType.weekend;
+    return GuardRequestType.daily;
   }
 
   String get typeLabel => switch (type) {
