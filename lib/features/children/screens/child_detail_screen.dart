@@ -74,7 +74,7 @@ class ChildDetailScreen extends ConsumerWidget {
             body: Center(child: Text('Enfant introuvable')),
           );
         }
-        final initials = '${child.firstName[0]}${child.lastName[0]}';
+        final initials = '${child.firstName.isNotEmpty ? child.firstName[0] : ''}${child.lastName.isNotEmpty ? child.lastName[0] : ''}';
 
         return Scaffold(
           backgroundColor: Colors.transparent,

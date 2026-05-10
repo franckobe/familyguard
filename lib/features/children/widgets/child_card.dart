@@ -14,7 +14,7 @@ class ChildCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final initials = '${child.firstName[0]}${child.lastName[0]}';
+    final initials = '${child.firstName.isNotEmpty ? child.firstName[0] : ''}${child.lastName.isNotEmpty ? child.lastName[0] : ''}';
 
     return GestureDetector(
       onTap: () => context.push('/children/${child.id}/edit', extra: child),
