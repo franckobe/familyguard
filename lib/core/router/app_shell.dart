@@ -11,6 +11,7 @@ class AppShell extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.transparent,
+      extendBody: true,
       body: navigationShell,
       bottomNavigationBar: GlassTabBar(
         currentIndex: navigationShell.currentIndex,
