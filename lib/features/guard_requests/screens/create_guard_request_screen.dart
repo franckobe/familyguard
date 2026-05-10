@@ -1,13 +1,388 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_text_styles.dart';
+import '../../../core/theme/glass_app_bar.dart';
+import '../../../core/widgets/app_background.dart';
+import '../../children/models/child.dart';
+import '../../children/providers/children_providers.dart';
+import '../models/guard_request.dart';
 
-class CreateGuardRequestScreen extends StatelessWidget {
+class CreateGuardRequestScreen extends ConsumerStatefulWidget {
   const CreateGuardRequestScreen({super.key});
 
   @override
+  ConsumerState<CreateGuardRequestScreen> createState() =>
+      _CreateGuardRequestScreenState();
+}
+
+class _CreateGuardRequestScreenState
+    extends ConsumerState<CreateGuardRequestScreen> {
+  int _step = 0;
+
+  // Step 1 state
+  Child? _selectedChild;
+  GuardRequestType _type = GuardRequestType.hourly;
+  DateTime _startAt = DateTime.now().add(const Duration(hours: 1));
+  DateTime _endAt = DateTime.now().add(const Duration(hours: 3));
+  // ignore: unused_field — used in Task 8 _submit()
+  String _location = '';
+  // ignore: unused_field — used in Task 8 _submit()
+  String _notes = '';
+  RecurrenceType _recurrenceType = RecurrenceType.none;
+
+  // Step 2 state
+  final List<(DateTime start, DateTime end)> _occurrences = [];
+
+  // Step 3 state — handled in Task 8
+
+  // ignore: prefer_final_fields — mutated in Task 8 _submit()
+  bool _loading = false;
+
+  Future<void> _pickDateTime({required bool isStart}) async {
+    final now = DateTime.now();
+    final date = await showDatePicker(
+      context: context,
+      initialDate: isStart ? _startAt : _endAt,
+      firstDate: now,
+      lastDate: now.add(const Duration(days: 365)),
+    );
+    if (date == null || !mounted) return;
+    final time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(isStart ? _startAt : _endAt),
+    );
+    if (time == null || !mounted) return;
+    final result = DateTime(date.year, date.month, date.day, time.hour, time.minute);
+    setState(() {
+      if (isStart) {
+        _startAt = result;
+        if (_endAt.isBefore(_startAt)) _endAt = _startAt.add(const Duration(hours: 2));
+      } else {
+        _endAt = result;
+      }
+    });
+  }
+
+  Future<void> _pickOccurrence() async {
+    final now = DateTime.now();
+    final date = await showDatePicker(
+      context: context,
+      initialDate: now.add(const Duration(days: 1)),
+      firstDate: now,
+      lastDate: now.add(const Duration(days: 365)),
+    );
+    if (date == null || !mounted) return;
+    final startTime = await showTimePicker(
+      context: context,
+      initialTime: const TimeOfDay(hour: 9, minute: 0),
+    );
+    if (startTime == null || !mounted) return;
+    final endTime = await showTimePicker(
+      context: context,
+      initialTime: const TimeOfDay(hour: 17, minute: 0),
+    );
+    if (endTime == null || !mounted) return;
+    setState(() {
+      _occurrences.add((
+        DateTime(date.year, date.month, date.day, startTime.hour, startTime.minute),
+        DateTime(date.year, date.month, date.day, endTime.hour, endTime.minute),
+      ));
+    });
+  }
+
+  Widget _buildStep1(List<Child> children) {
+    final fmt = DateFormat('d MMM HH:mm', 'fr');
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+      children: [
+        Text('Enfant', style: AppTextStyles.sectionLabel),
+        const SizedBox(height: 8),
+        ...children.map((c) {
+          final selected = _selectedChild?.id == c.id;
+          return GestureDetector(
+            onTap: () => setState(() => _selectedChild = c),
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: selected ? AppColors.glassPurpleSurface : AppColors.glassSurface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: selected ? AppColors.glassPurpleBorder : AppColors.glassBorder,
+                  width: 0.5,
+                ),
+              ),
+              child: Text(
+                '${c.firstName} ${c.lastName}'.trim(),
+                style: AppTextStyles.cardTitle,
+              ),
+            ),
+          );
+        }),
+        const SizedBox(height: 20),
+        Text('Type de garde', style: AppTextStyles.sectionLabel),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8, runSpacing: 8,
+          children: GuardRequestType.values.map((t) {
+            final selected = _type == t;
+            final label = switch (t) {
+              GuardRequestType.hourly  => 'Quelques heures',
+              GuardRequestType.halfDay => 'Demi-journée',
+              GuardRequestType.daily   => 'Journée',
+              GuardRequestType.night   => 'Nuit',
+              GuardRequestType.weekend => 'Week-end',
+            };
+            return GestureDetector(
+              onTap: () => setState(() => _type = t),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  color: selected ? AppColors.glassPurpleSurface : AppColors.glassSurface,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: selected ? AppColors.glassPurpleBorder : AppColors.glassBorder,
+                    width: 0.5,
+                  ),
+                ),
+                child: Text(label, style: AppTextStyles.cardTitle.copyWith(
+                  color: selected ? AppColors.badgeNewText : AppColors.textPrimary,
+                )),
+              ),
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 20),
+        Text('Dates', style: AppTextStyles.sectionLabel),
+        const SizedBox(height: 8),
+        _DateTile(label: 'Début', value: fmt.format(_startAt), onTap: () => _pickDateTime(isStart: true)),
+        const SizedBox(height: 8),
+        _DateTile(label: 'Fin', value: fmt.format(_endAt), onTap: () => _pickDateTime(isStart: false)),
+        const SizedBox(height: 20),
+        Text('Récurrence', style: AppTextStyles.sectionLabel),
+        const SizedBox(height: 8),
+        Row(
+          children: RecurrenceType.values.map((r) {
+            final selected = _recurrenceType == r;
+            final label = r == RecurrenceType.none ? 'Ponctuel' : 'Récurrent';
+            return Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: GestureDetector(
+                onTap: () => setState(() => _recurrenceType = r),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: selected ? AppColors.glassPurpleSurface : AppColors.glassSurface,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: selected ? AppColors.glassPurpleBorder : AppColors.glassBorder,
+                      width: 0.5,
+                    ),
+                  ),
+                  child: Text(label, style: AppTextStyles.cardTitle.copyWith(
+                    color: selected ? AppColors.badgeNewText : AppColors.textPrimary,
+                  )),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 20),
+        TextField(
+          style: const TextStyle(color: AppColors.textPrimary),
+          decoration: const InputDecoration(labelText: 'Lieu (optionnel)'),
+          onChanged: (v) => _location = v,
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          style: const TextStyle(color: AppColors.textPrimary),
+          decoration: const InputDecoration(labelText: 'Notes (optionnel)'),
+          maxLines: 3,
+          onChanged: (v) => _notes = v,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStep2() {
+    final fmt = DateFormat('d MMM HH:mm', 'fr');
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+      children: [
+        Text('Occurrences récurrentes', style: AppTextStyles.cardTitle),
+        const SizedBox(height: 4),
+        Text('Ajoutez les dates supplémentaires.', style: AppTextStyles.cardSubtitle),
+        const SizedBox(height: 16),
+        ..._occurrences.asMap().entries.map((e) => Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AppColors.glassSurface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.glassBorder, width: 0.5),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '${fmt.format(e.value.$1)} → ${fmt.format(e.value.$2)}',
+                  style: AppTextStyles.cardTitle,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(LucideIcons.x, size: 16, color: AppColors.textTertiary),
+                onPressed: () => setState(() => _occurrences.removeAt(e.key)),
+              ),
+            ],
+          ),
+        )),
+        const SizedBox(height: 8),
+        OutlinedButton.icon(
+          onPressed: _pickOccurrence,
+          icon: const Icon(LucideIcons.plus, size: 16),
+          label: const Text('Ajouter une date'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: AppColors.primaryLight,
+            side: const BorderSide(color: AppColors.glassBorder, width: 0.5),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Step 3 will be added in Task 8
+
+  bool get _canProceedStep1 =>
+      _selectedChild != null && _endAt.isAfter(_startAt);
+
+  @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    final childrenAsync = ref.watch(childrenProvider);
+    final children = childrenAsync.valueOrNull?.where((c) => !c.archived).toList() ?? [];
+
+    final steps = [
+      'Détails',
+      if (_recurrenceType == RecurrenceType.custom) 'Occurrences',
+      'Destinataires',
+    ];
+    final totalSteps = steps.length;
+    final isLastStep = _step == totalSteps - 1;
+
+    return Scaffold(
       backgroundColor: Colors.transparent,
-      body: Center(child: Text('Create Guard Request')),
+      extendBodyBehindAppBar: true,
+      appBar: GlassAppBar(
+        title: Text(steps[_step]),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(4),
+          child: LinearProgressIndicator(
+            value: (_step + 1) / totalSteps,
+            backgroundColor: AppColors.glassSurface,
+            color: AppColors.primaryLight,
+            minHeight: 3,
+          ),
+        ),
+      ),
+      body: AppBackground(
+        child: SafeArea(
+          child: Column(
+            children: [
+              Expanded(
+                child: _buildCurrentStep(children),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                child: Row(
+                  children: [
+                    if (_step > 0)
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => setState(() => _step--),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.textSecondary,
+                            side: const BorderSide(color: AppColors.glassBorder, width: 0.5),
+                          ),
+                          child: const Text('Retour'),
+                        ),
+                      ),
+                    if (_step > 0) const SizedBox(width: 12),
+                    Expanded(
+                      flex: 2,
+                      child: FilledButton(
+                        onPressed: _canProceed() ? _onNext : null,
+                        style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
+                        child: _loading
+                            ? const SizedBox(
+                                height: 20, width: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                              )
+                            : Text(isLastStep ? 'Envoyer' : 'Suivant'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCurrentStep(List<Child> children) {
+    if (_step == 0) return _buildStep1(children);
+    if (_recurrenceType == RecurrenceType.custom && _step == 1) return _buildStep2();
+    return _buildStep3(); // implemented in Task 8
+  }
+
+  bool _canProceed() {
+    if (_step == 0) return _canProceedStep1;
+    return true;
+  }
+
+  Future<void> _onNext() async {
+    final totalSteps = _recurrenceType == RecurrenceType.custom ? 3 : 2;
+    if (_step < totalSteps - 1) {
+      setState(() => _step++);
+    } else {
+      await _submit();
+    }
+  }
+
+  // _buildStep3 and _submit implemented in Task 8
+  Widget _buildStep3() => const Center(child: CircularProgressIndicator());
+  Future<void> _submit() async {}
+}
+
+class _DateTile extends StatelessWidget {
+  const _DateTile({required this.label, required this.value, required this.onTap});
+  final String label;
+  final String value;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColors.glassSurface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.glassBorder, width: 0.5),
+        ),
+        child: Row(
+          children: [
+            const Icon(LucideIcons.calendar, size: 16, color: AppColors.primaryLight),
+            const SizedBox(width: 10),
+            Text('$label : ', style: AppTextStyles.cardSubtitle),
+            Text(value, style: AppTextStyles.cardTitle),
+          ],
+        ),
+      ),
     );
   }
 }
