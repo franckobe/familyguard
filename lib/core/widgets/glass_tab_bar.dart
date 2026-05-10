@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 
@@ -14,16 +15,15 @@ class GlassTabBar extends StatelessWidget {
   });
 
   static const _tabs = [
-    (icon: Icons.home_rounded,          label: 'Accueil'),
-    (icon: Icons.calendar_today_rounded, label: 'Gardes'),
-    (icon: Icons.people_rounded,         label: 'Réseau'),
-    (icon: Icons.person_rounded,         label: 'Profil'),
+    (icon: LucideIcons.baby,     label: 'Enfants'),
+    (icon: LucideIcons.users,    label: 'Connexions'),
+    (icon: LucideIcons.calendar, label: 'Gardes'),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(28),
         child: BackdropFilter(
@@ -45,7 +45,7 @@ class GlassTabBar extends StatelessWidget {
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     curve: Curves.easeOut,
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
                     decoration: BoxDecoration(
                       color: isActive ? AppColors.primarySurface : Colors.transparent,
                       borderRadius: BorderRadius.circular(18),
