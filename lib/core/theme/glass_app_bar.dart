@@ -1,11 +1,8 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'app_colors.dart';
 
-/// AppBar avec effet frosted glass iOS.
-///
-/// Utilise [AppBar] + [flexibleSpace] — Flutter gère lui-même le status bar,
-/// aucun risque d'overflow.
 class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
   const GlassAppBar({
     super.key,
@@ -29,12 +26,10 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-
     Widget? effectiveLeading = leading;
     if (effectiveLeading == null && automaticallyImplyLeading) {
       if (Navigator.canPop(context)) {
-        effectiveLeading = _CupertinoBackButton(color: cs.primary);
+        effectiveLeading = const _CupertinoBackButton();
       }
     }
 
@@ -50,16 +45,16 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
       surfaceTintColor: Colors.transparent,
       elevation: 0,
       scrolledUnderElevation: 0,
-      systemOverlayStyle: SystemUiOverlayStyle.dark,
+      systemOverlayStyle: SystemUiOverlayStyle.light,
       flexibleSpace: ClipRect(
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
           child: DecoratedBox(
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.80),
+              color: AppColors.glassSurface,
               border: Border(
                 bottom: BorderSide(
-                  color: Colors.black.withValues(alpha: 0.08),
+                  color: AppColors.glassBorder,
                   width: 0.5,
                 ),
               ),
@@ -71,28 +66,25 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 }
 
-/// Bouton retour style iOS — « < Retour »
 class _CupertinoBackButton extends StatelessWidget {
-  const _CupertinoBackButton({required this.color});
-
-  final Color color;
+  const _CupertinoBackButton();
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: () => Navigator.of(context).pop(),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 8),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.arrow_back_ios_new, size: 18, color: color),
-            const SizedBox(width: 3),
+            Icon(Icons.arrow_back_ios_new, size: 18, color: AppColors.primaryLight),
+            SizedBox(width: 3),
             Text(
               'Retour',
               style: TextStyle(
-                color: color,
+                color: AppColors.primaryLight,
                 fontSize: 17,
                 fontWeight: FontWeight.w400,
               ),
