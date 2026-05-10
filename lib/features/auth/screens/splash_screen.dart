@@ -17,7 +17,7 @@ class SplashScreen extends ConsumerWidget {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!context.mounted) return;
         authAsync.valueOrNull != null
-            ? context.go('/home')
+            ? context.go('/children')
             : context.go('/login');
       });
     }
