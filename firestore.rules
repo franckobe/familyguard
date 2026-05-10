@@ -18,5 +18,18 @@ service cloud.firestore {
       allow read, update, delete: if isAuth() && isOwner(resource.data.parentId);
       allow create: if isAuth() && isOwner(request.resource.data.parentId);
     }
+
+    match /connections/{connectionId} {
+      allow read: if isAuth() &&
+        (request.auth.uid == resource.data.parentId ||
+         request.auth.uid == resource.data.caregiverId);
+
+      allow create: if isAuth() &&
+        isOwner(request.resource.data.parentId);
+
+      allow update: if isAuth() &&
+        (request.auth.uid == resource.data.parentId ||
+         request.auth.uid == resource.data.caregiverId);
+    }
   }
 }
