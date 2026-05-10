@@ -1,7 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/glass_app_bar.dart';
+import '../../../core/widgets/app_background.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -45,70 +48,81 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   String _errorMessage(String code) => switch (code) {
         'email-already-in-use' => 'Cet email est déjà utilisé.',
-        'weak-password' => 'Mot de passe trop faible.',
-        'invalid-email' => 'Email invalide.',
-        _ => "Erreur lors de l'inscription. Réessayez.",
+        'weak-password'        => 'Mot de passe trop faible.',
+        'invalid-email'        => 'Email invalide.',
+        _                      => "Erreur lors de l'inscription. Réessayez.",
       };
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.transparent,
+      extendBodyBehindAppBar: true,
       appBar: const GlassAppBar(title: Text('Créer un compte')),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
+      body: AppBackground(
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SizedBox(height: 24),
+                  Text(
+                    'Bienvenue !',
+                    style: AppTextStyles.screenTitle,
                   ),
-                  validator: (v) =>
-                      (v == null || !v.contains('@')) ? 'Email invalide' : null,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Mot de passe',
+                  const SizedBox(height: 4),
+                  Text(
+                    'Créez votre compte pour commencer.',
+                    style: AppTextStyles.greeting,
                   ),
-                  validator: (v) =>
-                      (v == null || v.length < 6) ? 'Min. 6 caractères' : null,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _confirmController,
-                  obscureText: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Confirmer le mot de passe',
+                  const SizedBox(height: 32),
+                  TextFormField(
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    style: const TextStyle(color: AppColors.textPrimary),
+                    decoration: const InputDecoration(labelText: 'Email'),
+                    validator: (v) =>
+                        (v == null || !v.contains('@')) ? 'Email invalide' : null,
                   ),
-                  validator: (v) => v != _passwordController.text
-                      ? 'Les mots de passe ne correspondent pas'
-                      : null,
-                ),
-                const SizedBox(height: 24),
-                FilledButton(
-                  onPressed: _loading ? null : _register,
-                  child: _loading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Text("S'inscrire"),
-                ),
-                const SizedBox(height: 16),
-                TextButton(
-                  onPressed: () => context.pop(),
-                  child: const Text('Déjà un compte ? Se connecter'),
-                ),
-              ],
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _passwordController,
+                    obscureText: true,
+                    style: const TextStyle(color: AppColors.textPrimary),
+                    decoration: const InputDecoration(labelText: 'Mot de passe'),
+                    validator: (v) =>
+                        (v == null || v.length < 6) ? 'Min. 6 caractères' : null,
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _confirmController,
+                    obscureText: true,
+                    style: const TextStyle(color: AppColors.textPrimary),
+                    decoration: const InputDecoration(labelText: 'Confirmer le mot de passe'),
+                    validator: (v) => v != _passwordController.text
+                        ? 'Les mots de passe ne correspondent pas'
+                        : null,
+                  ),
+                  const SizedBox(height: 24),
+                  FilledButton(
+                    onPressed: _loading ? null : _register,
+                    child: _loading
+                        ? const SizedBox(
+                            height: 20, width: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          )
+                        : const Text("S'inscrire"),
+                  ),
+                  const SizedBox(height: 16),
+                  TextButton(
+                    onPressed: () => context.pop(),
+                    child: const Text('Déjà un compte ? Se connecter'),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

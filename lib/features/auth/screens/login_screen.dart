@@ -1,6 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_text_styles.dart';
+import '../../../core/widgets/app_background.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -41,81 +44,87 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   String _errorMessage(String code) => switch (code) {
-        'user-not-found' => 'Aucun compte avec cet email.',
-        'wrong-password' => 'Mot de passe incorrect.',
+        'user-not-found'     => 'Aucun compte avec cet email.',
+        'wrong-password'     => 'Mot de passe incorrect.',
         'invalid-credential' => 'Email ou mot de passe incorrect.',
-        'too-many-requests' => 'Trop de tentatives. Réessayez plus tard.',
-        _ => 'Erreur de connexion. Réessayez.',
+        'too-many-requests'  => 'Trop de tentatives. Réessayez plus tard.',
+        _                    => 'Erreur de connexion. Réessayez.',
       };
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const SizedBox(height: 48),
-                Icon(Icons.shield,
-                    size: 60, color: Theme.of(context).colorScheme.primary),
-                const SizedBox(height: 16),
-                Text(
-                  'Connexion',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context)
-                      .textTheme
-                      .headlineMedium
-                      ?.copyWith(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 32),
-                TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
+      backgroundColor: Colors.transparent,
+      body: AppBackground(
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SizedBox(height: 48),
+                  Center(
+                    child: Container(
+                      width: 72, height: 72,
+                      decoration: BoxDecoration(
+                        color: AppColors.glassPurpleSurface,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.glassPurpleBorder, width: 0.5),
+                      ),
+                      child: const Icon(Icons.shield, size: 40, color: AppColors.primaryLight),
+                    ),
                   ),
-                  validator: (v) =>
-                      (v == null || !v.contains('@')) ? 'Email invalide' : null,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Mot de passe',
+                  const SizedBox(height: 20),
+                  Text(
+                    'Connexion',
+                    textAlign: TextAlign.center,
+                    style: AppTextStyles.screenTitle,
                   ),
-                  validator: (v) =>
-                      (v == null || v.length < 6) ? 'Min. 6 caractères' : null,
-                ),
-                const SizedBox(height: 8),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () => context.push('/forgot-password'),
-                    child: const Text('Mot de passe oublié ?'),
+                  const SizedBox(height: 32),
+                  TextFormField(
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    style: const TextStyle(color: AppColors.textPrimary),
+                    decoration: const InputDecoration(labelText: 'Email'),
+                    validator: (v) =>
+                        (v == null || !v.contains('@')) ? 'Email invalide' : null,
                   ),
-                ),
-                const SizedBox(height: 16),
-                FilledButton(
-                  onPressed: _loading ? null : _signIn,
-                  child: _loading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Text('Se connecter'),
-                ),
-                const SizedBox(height: 16),
-                TextButton(
-                  onPressed: () => context.push('/register'),
-                  child: const Text("Pas encore de compte ? S'inscrire"),
-                ),
-              ],
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _passwordController,
+                    obscureText: true,
+                    style: const TextStyle(color: AppColors.textPrimary),
+                    decoration: const InputDecoration(labelText: 'Mot de passe'),
+                    validator: (v) =>
+                        (v == null || v.length < 6) ? 'Min. 6 caractères' : null,
+                  ),
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () => context.push('/forgot-password'),
+                      child: const Text('Mot de passe oublié ?'),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  FilledButton(
+                    onPressed: _loading ? null : _signIn,
+                    child: _loading
+                        ? const SizedBox(
+                            height: 20, width: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          )
+                        : const Text('Se connecter'),
+                  ),
+                  const SizedBox(height: 16),
+                  TextButton(
+                    onPressed: () => context.push('/register'),
+                    child: const Text("Pas encore de compte ? S'inscrire"),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

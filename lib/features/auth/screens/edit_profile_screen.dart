@@ -1,11 +1,15 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/glass_app_bar.dart';
+import '../../../core/widgets/app_background.dart';
+import '../../../core/widgets/avatar_initials.dart';
 import '../providers/auth_providers.dart';
 
 class EditProfileScreen extends ConsumerStatefulWidget {
@@ -21,7 +25,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   final _lastNameController = TextEditingController();
   final _phoneController = TextEditingController();
   bool _loading = false;
-  File? _pickedImage;
+  Uint8List? _pickedImageBytes;
 
   @override
   void initState() {
@@ -49,13 +53,19 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       maxHeight: 512,
       imageQuality: 80,
     );
-    if (picked != null) setState(() => _pickedImage = File(picked.path));
+    if (picked != null) {
+      final bytes = await picked.readAsBytes();
+      setState(() => _pickedImageBytes = bytes);
+    }
   }
 
   Future<String?> _uploadAvatar(String uid) async {
-    if (_pickedImage == null) return null;
+    if (_pickedImageBytes == null) return null;
     final ref = FirebaseStorage.instance.ref('avatars/$uid.jpg');
-    await ref.putFile(_pickedImage!);
+    await ref.putData(
+      _pickedImageBytes!,
+      SettableMetadata(contentType: 'image/jpeg'),
+    );
     return ref.getDownloadURL();
   }
 
@@ -73,10 +83,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             : _phoneController.text.trim(),
       };
       if (avatarUrl != null) update['avatarUrl'] = avatarUrl;
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .update(update);
+      await FirebaseFirestore.instance.collection('users').doc(uid).update(update);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Profil mis à jour')),
@@ -95,72 +102,98 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(currentUserProvider).valueOrNull;
+    final initials = user != null
+        ? '${user.firstName.isNotEmpty ? user.firstName[0] : ''}${user.lastName.isNotEmpty ? user.lastName[0] : ''}'
+        : '?';
+
     return Scaffold(
+      backgroundColor: Colors.transparent,
+      extendBodyBehindAppBar: true,
       appBar: const GlassAppBar(title: Text('Mon profil')),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Center(
-                  child: GestureDetector(
-                    onTap: _pickImage,
-                    child: CircleAvatar(
-                      radius: 48,
-                      backgroundImage: _pickedImage != null
-                          ? FileImage(_pickedImage!) as ImageProvider
-                          : (user?.avatarUrl != null
-                              ? NetworkImage(user!.avatarUrl!)
-                              : null),
-                      child: (_pickedImage == null && user?.avatarUrl == null)
-                          ? const Icon(Icons.person, size: 48)
-                          : null,
+      body: AppBackground(
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SizedBox(height: 16),
+                  Center(
+                    child: GestureDetector(
+                      onTap: _pickImage,
+                      child: Stack(
+                        children: [
+                          _pickedImageBytes != null
+                              ? CircleAvatar(
+                                  radius: 48,
+                                  backgroundImage: MemoryImage(_pickedImageBytes!),
+                                )
+                              : (user?.avatarUrl != null
+                                  ? CircleAvatar(
+                                      radius: 48,
+                                      backgroundImage: NetworkImage(user!.avatarUrl!),
+                                    )
+                                  : AvatarInitials(
+                                      initials: initials,
+                                      size: 96,
+                                    )),
+                          Positioned(
+                            bottom: 0, right: 0,
+                            child: Container(
+                              width: 28, height: 28,
+                              decoration: BoxDecoration(
+                                color: AppColors.primary,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: AppColors.bgGradientMid, width: 2),
+                              ),
+                              child: const Icon(Icons.camera_alt, size: 14, color: Colors.white),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                const Center(child: Text('Appuyer pour changer la photo')),
-                const SizedBox(height: 24),
-                TextFormField(
-                  controller: _firstNameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Prénom',
+                  const SizedBox(height: 8),
+                  Center(
+                    child: Text('Appuyer pour changer la photo', style: AppTextStyles.cardSubtitle),
                   ),
-                  validator: (v) =>
-                      (v == null || v.trim().isEmpty) ? 'Champ requis' : null,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _lastNameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Nom',
+                  const SizedBox(height: 28),
+                  TextFormField(
+                    controller: _firstNameController,
+                    style: const TextStyle(color: AppColors.textPrimary),
+                    decoration: const InputDecoration(labelText: 'Prénom'),
+                    validator: (v) =>
+                        (v == null || v.trim().isEmpty) ? 'Champ requis' : null,
                   ),
-                  validator: (v) =>
-                      (v == null || v.trim().isEmpty) ? 'Champ requis' : null,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _phoneController,
-                  keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(
-                    labelText: 'Téléphone (optionnel)',
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _lastNameController,
+                    style: const TextStyle(color: AppColors.textPrimary),
+                    decoration: const InputDecoration(labelText: 'Nom'),
+                    validator: (v) =>
+                        (v == null || v.trim().isEmpty) ? 'Champ requis' : null,
                   ),
-                ),
-                const SizedBox(height: 24),
-                FilledButton(
-                  onPressed: _loading ? null : _save,
-                  child: _loading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Text('Enregistrer'),
-                ),
-              ],
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _phoneController,
+                    keyboardType: TextInputType.phone,
+                    style: const TextStyle(color: AppColors.textPrimary),
+                    decoration: const InputDecoration(labelText: 'Téléphone (optionnel)'),
+                  ),
+                  const SizedBox(height: 28),
+                  FilledButton(
+                    onPressed: _loading ? null : _save,
+                    child: _loading
+                        ? const SizedBox(
+                            height: 20, width: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          )
+                        : const Text('Enregistrer'),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

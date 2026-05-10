@@ -1,6 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/glass_app_bar.dart';
+import '../../../core/widgets/app_background.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -48,57 +51,81 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.transparent,
+      extendBodyBehindAppBar: true,
       appBar: const GlassAppBar(title: Text('Mot de passe oublié')),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: _sent
-              ? Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.check_circle,
-                        size: 64,
-                        color: Theme.of(context).colorScheme.primary),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Email envoyé ! Vérifiez votre boîte mail pour réinitialiser votre mot de passe.',
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                )
-              : Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const Text(
-                        'Entrez votre email pour recevoir un lien de réinitialisation.',
-                      ),
-                      const SizedBox(height: 24),
-                      TextFormField(
-                        controller: _emailController,
-                        keyboardType: TextInputType.emailAddress,
-                        decoration: const InputDecoration(
-                          labelText: 'Email',
+      body: AppBackground(
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: _sent
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 72, height: 72,
+                          decoration: BoxDecoration(
+                            color: AppColors.glassPurpleSurface,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: AppColors.glassPurpleBorder, width: 0.5),
+                          ),
+                          child: const Icon(Icons.check, size: 36, color: AppColors.badgeAcceptedText),
                         ),
-                        validator: (v) => (v == null || !v.contains('@'))
-                            ? 'Email invalide'
-                            : null,
-                      ),
-                      const SizedBox(height: 24),
-                      FilledButton(
-                        onPressed: _loading ? null : _sendReset,
-                        child: _loading
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              )
-                            : const Text('Envoyer le lien'),
-                      ),
-                    ],
+                        const SizedBox(height: 20),
+                        Text(
+                          'Email envoyé !',
+                          style: AppTextStyles.screenTitle,
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Vérifiez votre boîte mail pour réinitialiser votre mot de passe.',
+                          style: AppTextStyles.greeting,
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  )
+                : Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const SizedBox(height: 24),
+                        Text(
+                          'Réinitialiser',
+                          style: AppTextStyles.screenTitle,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Entrez votre email pour recevoir un lien de réinitialisation.',
+                          style: AppTextStyles.greeting,
+                        ),
+                        const SizedBox(height: 32),
+                        TextFormField(
+                          controller: _emailController,
+                          keyboardType: TextInputType.emailAddress,
+                          style: const TextStyle(color: AppColors.textPrimary),
+                          decoration: const InputDecoration(labelText: 'Email'),
+                          validator: (v) => (v == null || !v.contains('@'))
+                              ? 'Email invalide'
+                              : null,
+                        ),
+                        const SizedBox(height: 24),
+                        FilledButton(
+                          onPressed: _loading ? null : _sendReset,
+                          child: _loading
+                              ? const SizedBox(
+                                  height: 20, width: 20,
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                )
+                              : const Text('Envoyer le lien'),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
+          ),
         ),
       ),
     );
