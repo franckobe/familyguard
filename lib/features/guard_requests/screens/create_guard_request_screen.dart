@@ -52,16 +52,10 @@ class _CreateGuardRequestScreenState
 
   String? get _resolvedLocation {
     if (_locationPreset == null) return null;
-    if (_locationPreset == 'chez_moi') return 'Chez moi';
-    if (_locationPreset == 'chez_babysitter') return 'Chez le babysitter';
+    if (_locationPreset == 'chez_moi') return 'parent_house';
+    if (_locationPreset == 'chez_babysitter') return 'caregiver_house';
     final t = _locationCustom.trim();
     return t.isEmpty ? null : t;
-  }
-
-  static TimeOfDay _roundToQuarter(TimeOfDay t) {
-    final total = t.hour * 60 + t.minute;
-    final rounded = ((total / 15).round() * 15) % (24 * 60);
-    return TimeOfDay(hour: rounded ~/ 60, minute: rounded % 60);
   }
 
   Future<void> _pickDateTime({required bool isStart}) async {
@@ -79,8 +73,7 @@ class _CreateGuardRequestScreenState
       initialTime: TimeOfDay.fromDateTime(isStart ? _startAt : _endAt),
     );
     if (time == null || !mounted) return;
-    final q = _roundToQuarter(time);
-    final result = DateTime(date.year, date.month, date.day, q.hour, q.minute);
+    final result = DateTime(date.year, date.month, date.day, time.hour, time.minute);
     setState(() {
       if (isStart) {
         _startAt = result;
@@ -111,12 +104,10 @@ class _CreateGuardRequestScreenState
       initialTime: const TimeOfDay(hour: 17, minute: 0),
     );
     if (endTime == null || !mounted) return;
-    final qs = _roundToQuarter(startTime);
-    final qe = _roundToQuarter(endTime);
     setState(() {
       _occurrences.add((
-        DateTime(date.year, date.month, date.day, qs.hour, qs.minute),
-        DateTime(date.year, date.month, date.day, qe.hour, qe.minute),
+        DateTime(date.year, date.month, date.day, startTime.hour, startTime.minute),
+        DateTime(date.year, date.month, date.day, endTime.hour, endTime.minute),
       ));
     });
   }
