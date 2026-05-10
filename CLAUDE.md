@@ -4,6 +4,11 @@ Document de référence pour Claude Code. À relire au début de chaque session 
 
 ---
 
+## Design du projet
+Voir DESIGN.md 
+
+---
+
 ## Vision du projet
 
 FamilyGuard est une application mobile et web permettant à des parents d'organiser la garde de leurs enfants avec leurs proches ou babysitters de confiance. Le parent invite des gardes dans son réseau privé ; les gardes peuvent accepter ou refuser les demandes. Tout reste dans un cercle fermé — pas de mise en relation publique.
