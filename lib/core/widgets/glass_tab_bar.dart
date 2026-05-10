@@ -40,35 +40,40 @@ class GlassTabBar extends StatelessWidget {
               children: List.generate(_tabs.length, (i) {
                 final tab = _tabs[i];
                 final isActive = i == currentIndex;
-                return GestureDetector(
-                  onTap: () => onTap(i),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    curve: Curves.easeOut,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: isActive ? AppColors.primarySurface : Colors.transparent,
-                      borderRadius: BorderRadius.circular(18),
-                      border: isActive
-                          ? Border.all(color: AppColors.glassPurpleBorder, width: 0.5)
-                          : null,
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          tab.icon,
-                          size: 20,
-                          color: isActive ? const Color(0xFFC4B5FD) : AppColors.textTertiary,
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          tab.label,
-                          style: AppTextStyles.tabLabel.copyWith(
-                            color: isActive ? const Color(0xFFC4B5FD) : AppColors.textTertiary,
+                return Semantics(
+                  label: '${tab.label}, onglet ${i + 1} sur ${_tabs.length}',
+                  selected: isActive,
+                  button: true,
+                  child: GestureDetector(
+                    onTap: () => onTap(i),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      curve: Curves.easeOut,
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: isActive ? AppColors.primarySurface : Colors.transparent,
+                        borderRadius: BorderRadius.circular(18),
+                        border: isActive
+                            ? Border.all(color: AppColors.glassPurpleBorder, width: 0.5)
+                            : null,
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            tab.icon,
+                            size: 20,
+                            color: isActive ? AppColors.badgeNewText : AppColors.textTertiary,
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 3),
+                          Text(
+                            tab.label,
+                            style: AppTextStyles.tabLabel.copyWith(
+                              color: isActive ? AppColors.badgeNewText : AppColors.textTertiary,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 );
